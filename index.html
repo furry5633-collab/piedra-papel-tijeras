@@ -7,15 +7,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✊</text></svg>">
-<title>⚡ Piedra, Papel o Tijeras — VS CPU con IA</title>
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<title>Piedra, Papel o Tijeras — El Desafío</title>
 
 <!-- ===== Compartir en redes (WhatsApp/Telegram/Discord/X…) ===== -->
-<meta name="description" content="Juega al mejor de 3 contra una CPU que aprende tus patrones y te contraataca. Monedas, skins y 3 dificultades. ¿Podrás vencer a la CPU DEMONIO?">
+<meta name="description" content="Acepta el desafío: la máquina aprende de cada movimiento tuyo. Gana rondas seguidas, consigue monedas y desbloquea skins. ¿Hasta dónde llegarás?">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Piedra, Papel o Tijeras">
-<meta property="og:title" content="⚡ Piedra, Papel o Tijeras — VS CPU con IA">
-<meta property="og:description" content="La CPU aprende tus patrones y te contraataca. Mejor de 3, monedas, skins y 3 dificultades. ¿Podrás vencer a la CPU DEMONIO? 😈">
+<meta property="og:title" content="Piedra, Papel o Tijeras — El Desafío">
+<meta property="og:description" content="La máquina aprende de cada movimiento tuyo. Rondas seguidas, monedas y skins. ¿Hasta dónde llegarás?">
 <meta property="og:url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/">
 <meta property="og:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
 <meta property="og:image:secure_url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
@@ -25,8 +25,8 @@
 <meta property="og:image:alt" content="Dos manos enfrentadas a ambos lados de una línea neón: la tuya azul contra la roja de la CPU. PIEDRA · PAPEL · TIJERAS">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="⚡ Piedra, Papel o Tijeras — VS CPU con IA">
-<meta name="twitter:description" content="Una IA que aprende tus patrones y te contraataca. Mejor de 3, monedas y skins. ¿Podrás con la CPU DEMONIO?">
+<meta name="twitter:title" content="Piedra, Papel o Tijeras — El Desafío">
+<meta name="twitter:description" content="La máquina aprende de cada movimiento tuyo. ¿Hasta dónde llegarás?">
 <meta name="twitter:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -182,17 +182,12 @@ input{font-family:inherit}
 }
 .chip-player{left:12px; border-color:rgba(86,196,255,.55); color:#CFE9FF}
 .chip-ai{right:12px; border-color:rgba(255,90,120,.55); color:#FFD9E1}
-.pips{display:flex; gap:4px}
-.pips i{
-  width:clamp(8px,1.7vh,12px); height:clamp(8px,1.7vh,12px); border-radius:50%;
-  border:2px solid rgba(255,255,255,.45); display:inline-block;
-  transition:background .2s, box-shadow .2s, transform .2s;
+.pill{
+  font-family:var(--font-display); font-weight:900; font-size:.72em; letter-spacing:.05em;
+  padding:2px 9px; border-radius:999px; white-space:nowrap;
+  background:rgba(61,220,132,.14); color:#8FE3B0; border:1px solid rgba(61,220,132,.55);
 }
-.pips i.on{
-  background:var(--yellow); border-color:var(--yellow);
-  box-shadow:0 0 8px var(--yellow); transform:scale(1.15);
-}
-.chip-ai .pips i.on{background:var(--red2); border-color:var(--red2); box-shadow:0 0 8px var(--red2)}
+.pill-red{background:rgba(255,84,112,.13); color:#FF9DB0; border-color:rgba(255,84,112,.55)}
 
 /* Manos */
 .hand-wrap{
@@ -228,8 +223,28 @@ input{font-family:inherit}
   position:absolute; bottom:4%; left:16%; right:16%; height:8%;
   background:radial-gradient(ellipse at center, rgba(0,0,0,.45), transparent 70%);
 }
-.hand{position:relative; width:100%; height:100%; filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+.slide{position:relative; width:100%; height:100%}
+.hand{
+  position:relative; width:100%; height:100%;
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.42)) drop-shadow(0 0 22px var(--handglow, rgba(86,196,255,.3)));
+}
 .zone-ai .hand{transform:scaleX(-1)}
+.zone-player{--handglow:rgba(86,196,255,.34)}
+.zone-ai{--handglow:rgba(255,90,120,.32)}
+.zone.hot{--handglow:rgba(255,230,140,.55)}
+.slide.round-in{animation:handIn .55s cubic-bezier(.18,1.25,.3,1) both}
+.zone-player .slide.round-in{--hx:-52%}
+.zone-ai .slide.round-in{--hx:52%}
+@keyframes handIn{
+  0%{transform:translateX(var(--hx)) scale(.7); opacity:0; filter:blur(4px)}
+  55%{opacity:1}
+  100%{transform:translateX(0) scale(1); opacity:1; filter:blur(0)}
+}
+.zone.charge .aura{animation:auraPulse .45s ease-in-out infinite}
+@keyframes auraPulse{50%{transform:scale(1.16); opacity:.95}}
+.zone.burst .aura{transform:scale(1.3); opacity:1}
+#centerLine.flare{animation:lineFlare .32s ease-out}
+@keyframes lineFlare{35%{box-shadow:0 0 30px rgba(160,200,255,1), 0 0 80px rgba(120,140,255,.95)}}
 .pose{width:100%; height:100%; display:none}
 .pose.active{display:block}
 
@@ -245,7 +260,9 @@ input{font-family:inherit}
 }
 #chantWord.pop{animation:wordPop .38s cubic-bezier(.2,1.5,.4,1) forwards}
 @keyframes wordPop{0%{opacity:0;transform:scale(.25)}45%{opacity:1;transform:scale(1.16)}100%{opacity:1;transform:scale(1)}}
-.w-rock{color:var(--amber)} .w-paper{color:var(--sky)} .w-sci{color:var(--green)}
+#chantWord.w-rock{color:var(--amber); text-shadow:0 0 28px rgba(255,176,32,.65), 0 3px 0 rgba(0,0,0,.4)}
+#chantWord.w-paper{color:var(--sky); text-shadow:0 0 28px rgba(56,208,255,.65), 0 3px 0 rgba(0,0,0,.4)}
+#chantWord.w-sci{color:var(--green); text-shadow:0 0 28px rgba(61,220,132,.65), 0 3px 0 rgba(0,0,0,.4)}
 
 /* Banner de ronda */
 #roundBanner{
@@ -265,7 +282,7 @@ input{font-family:inherit}
 
 /* Estado de la CPU (analizando / predicción) */
 #cpuStatus{
-  position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+  position:absolute; bottom:46px; left:50%; transform:translateX(-50%);
   z-index:22; padding:6px 16px; border-radius:999px;
   background:rgba(10,14,30,.85); border:1px solid var(--glass-line);
   font-weight:700; font-size:clamp(11px,2.1vh,15px); color:#BFCEFF;
@@ -377,8 +394,24 @@ input{font-family:inherit}
   transform:translateY(6vh) scale(.92); transition:transform .3s cubic-bezier(.2,1.3,.4,1);
 }
 #matchOverlay.show .m-inner{transform:translateY(0) scale(1)}
-#mTrophy{font-size:clamp(40px,14vh,92px); line-height:1; filter:drop-shadow(0 8px 18px rgba(0,0,0,.5))}
-#matchOverlay.show #mTrophy{animation:trophyIn .55s cubic-bezier(.2,1.6,.4,1) both}
+.emblema{position:relative; width:clamp(60px,14vh,100px); aspect-ratio:1; margin:0 auto}
+.emblema .ring{position:absolute; inset:0; border-radius:50%; border:4px solid rgba(255,255,255,.22)}
+.emblema .star{
+  position:absolute; inset:13%;
+  background:linear-gradient(180deg,#FFE28A,#E0A800);
+  clip-path:polygon(50% 0,63% 33%,98% 35%,70% 57%,80% 92%,50% 72%,20% 92%,30% 57%,2% 35%,37% 33%);
+  filter:drop-shadow(0 0 16px rgba(255,200,40,.55));
+}
+.emblema .cross{position:absolute; inset:18%}
+.emblema .cross::before,.emblema .cross::after{
+  content:""; position:absolute; left:50%; top:0; bottom:0; width:16%;
+  background:linear-gradient(180deg,#FF7A93,#C11034); border-radius:99px;
+  transform:translateX(-50%) rotate(45deg); box-shadow:0 0 14px rgba(255,84,112,.5);
+}
+.emblema .cross::after{transform:translateX(-50%) rotate(-45deg)}
+.emblema.defeat .star{display:none}
+.emblema.victory .cross{display:none}
+#matchOverlay.show .emblema{animation:trophyIn .55s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes trophyIn{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
 #mTitle{
   font-family:var(--font-display); font-weight:900; line-height:1;
@@ -464,12 +497,32 @@ input{font-family:inherit}
 }
 .avatar svg{width:82%; aspect-ratio:1; --sw:12}
 .pinfo{display:flex; flex-direction:column; gap:1px; min-width:0}
-#nameInput{
-  background:transparent; border:none; outline:none; color:#fff;
-  font-weight:800; font-size:clamp(13px,2.9vh,19px); width:clamp(110px,18vw,190px);
-  border-bottom:2px dashed rgba(255,255,255,.25); padding:0 0 1px;
+#menuName{
+  font-weight:800; font-size:clamp(14px,3.2vh,21px); color:#fff;
+  max-width:clamp(120px,20vw,210px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+#nameScreen{
+  position:fixed; inset:0; z-index:115; display:flex; align-items:center; justify-content:center;
+  background:rgba(6,9,22,.92); padding:16px;
+}
+#nameScreen.hide{display:none}
+.name-card{display:flex; flex-direction:column; gap:14px; align-items:center; padding:26px 36px; text-align:center}
+.name-card h2{font-family:var(--font-display); font-weight:900; font-size:clamp(19px,5.4vh,32px)}
+#nameField{
+  background:rgba(255,255,255,.06); border:2px solid rgba(86,196,255,.55); color:#fff;
+  font-weight:800; font-size:clamp(16px,3.6vh,24px); text-align:center;
+  padding:.45em .8em; border-radius:14px; width:min(320px,68vw); outline:none;
+}
+#nameField:focus{border-color:var(--sky); box-shadow:0 0 16px rgba(56,208,255,.3)}
+.name-hint{color:#7C89BD; font-weight:700; font-size:clamp(10px,2vh,14px)}
 .precord{font-size:clamp(9px,1.8vh,12px); font-weight:700; color:#9AA7D8; letter-spacing:.08em}
+.coin{
+  display:inline-block; width:1.06em; height:1.06em; border-radius:50%; flex:none;
+  background:radial-gradient(circle at 34% 28%, #FFF3C4, #FFC53D 48%, #B8770A 98%);
+  box-shadow:inset 0 0 0 .13em rgba(255,255,255,.35), inset 0 -.13em 0 rgba(0,0,0,.28), 0 2px 4px rgba(0,0,0,.45);
+  position:relative; vertical-align:-.16em;
+}
+.coin::after{content:""; position:absolute; inset:27%; border-radius:50%; border:.09em solid rgba(120,74,4,.55)}
 .coins-chip{
   display:flex; align-items:center; gap:7px; padding:7px 16px; border-radius:999px;
   background:linear-gradient(180deg,#3A3000,#241D00);
@@ -499,18 +552,21 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
   color:#B9C4EA; font-weight:800; letter-spacing:.28em;
   font-size:clamp(9px,2vh,14px); text-align:center;
 }
-.diff-row{display:flex; gap:clamp(6px,1.6vw,14px); margin-top:clamp(2px,1vh,8px); flex-wrap:wrap; justify-content:center}
-.diff-pill{
-  border:2px solid rgba(255,255,255,.22); border-radius:999px; cursor:pointer;
-  background:rgba(255,255,255,.05); color:#AAB6E8; font-weight:900;
-  font-size:clamp(11px,2.5vh,17px); letter-spacing:.06em; padding:.42em 1.05em;
-  transition:background .15s, color .15s, border-color .15s, box-shadow .15s;
-  touch-action:manipulation;
+#threatBar{
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:22;
+  display:flex; align-items:center; gap:9px; padding:5px 13px; border-radius:999px;
+  background:rgba(10,14,30,.85); border:1px solid var(--glass-line);
 }
-.diff-pill:active{transform:scale(.95)}
-.diff-pill.active{
-  background:linear-gradient(180deg,#2A3364,#1B2247); color:#fff;
-  border-color:var(--yellow); box-shadow:0 0 14px rgba(255,217,61,.25);
+#threatBar .tlabel{font-size:clamp(8px,1.6vh,11px); font-weight:900; letter-spacing:.22em; color:#FF9DB0}
+.tsegs{display:flex; gap:3px}
+.tsegs i{
+  width:clamp(9px,1.8vw,13px); height:9px; border-radius:2.5px;
+  background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14);
+  transition:background .25s, box-shadow .25s;
+}
+.tsegs i.on{
+  background:linear-gradient(180deg,#FF7A93,#E4123A); border-color:transparent;
+  box-shadow:0 0 7px rgba(255,84,112,.65);
 }
 .menu-btns{display:flex; gap:clamp(10px,2.2vw,20px); margin-top:clamp(4px,1.4vh,12px); flex-wrap:wrap; justify-content:center}
 .mbtn{
@@ -656,6 +712,15 @@ body.portrait #rotateOverlay{display:flex}
       </g>
       <rect x="44" y="48" width="108" height="134" rx="38" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
       <rect x="58" y="98" width="104" height="34" rx="17" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)" transform="rotate(6 110 115)"/>
+      <rect x="37" y="74" width="12" height="92" rx="6" fill="rgba(255,255,255,.5)" stroke="none"/>
+      <rect x="52" y="80" width="5" height="80" rx="2.5" fill="rgba(255,255,255,.22)" stroke="none"/>
+      <g class="gloss" fill="#fff" opacity=".4" stroke="none">
+        <rect x="126" y="61" width="32" height="9" rx="4.5"/>
+        <rect x="134" y="92" width="36" height="9" rx="4.5"/>
+        <rect x="134" y="122" width="36" height="9" rx="4.5"/>
+        <rect x="126" y="152" width="32" height="9" rx="4.5"/>
+        <rect x="60" y="64" width="40" height="11" rx="5.5"/>
+      </g>
     </symbol>
     <!-- PAPEL -->
     <symbol id="pose-paper" viewBox="0 0 220 220">
@@ -668,6 +733,14 @@ body.portrait #rotateOverlay{display:flex}
         <rect x="66" y="150" width="50" height="22" rx="11" transform="rotate(43 74 161)"/>
       </g>
       <rect x="44" y="64" width="64" height="96" rx="24" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+      <rect x="37" y="74" width="12" height="92" rx="6" fill="rgba(255,255,255,.5)" stroke="none"/>
+      <rect x="52" y="80" width="5" height="80" rx="2.5" fill="rgba(255,255,255,.22)" stroke="none"/>
+      <g class="gloss" fill="#fff" opacity=".4" stroke="none">
+        <rect x="100" y="50" width="42" height="8" rx="4" transform="rotate(-17 96 56)"/>
+        <rect x="106" y="82" width="46" height="9" rx="4.5" transform="rotate(-5 96 87)"/>
+        <rect x="104" y="112" width="44" height="9" rx="4.5" transform="rotate(7 96 117)"/>
+        <rect x="58" y="76" width="34" height="10" rx="5"/>
+      </g>
     </symbol>
     <!-- TIJERAS -->
     <symbol id="pose-scissors" viewBox="0 0 220 220">
@@ -679,6 +752,13 @@ body.portrait #rotateOverlay{display:flex}
       </g>
       <rect x="44" y="62" width="98" height="114" rx="32" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
       <rect x="60" y="112" width="80" height="33" rx="16.5" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)" transform="rotate(16 100 128)"/>
+      <rect x="37" y="74" width="12" height="92" rx="6" fill="rgba(255,255,255,.5)" stroke="none"/>
+      <rect x="52" y="80" width="5" height="80" rx="2.5" fill="rgba(255,255,255,.22)" stroke="none"/>
+      <g class="gloss" fill="#fff" opacity=".42" stroke="none">
+        <rect x="118" y="69" width="52" height="9" rx="4.5" transform="rotate(-14 110 75)"/>
+        <rect x="118" y="111" width="52" height="9" rx="4.5" transform="rotate(14 110 117)"/>
+        <rect x="56" y="74" width="36" height="10" rx="5"/>
+      </g>
     </symbol>
 
     <!-- ====== Relleno de skins especiales ====== -->
@@ -735,41 +815,42 @@ body.portrait #rotateOverlay{display:flex}
         <circle id="ringFg" cx="36" cy="36" r="30" transform="rotate(-90 36 36)"/>
       </svg>
       <div id="cdNum">5</div>
-      <div id="roundLabel">RONDA 1 · PRIMERO A 2</div>
+      <div id="roundLabel">RONDA 1 · RACHA 0</div>
     </div>
   </div>
 
   <main id="arena">
     <div class="zone zone-player" id="zoneP">
-      <div class="chip chip-player"><span class="pname" id="nameP">TÚ</span><span class="pips" id="pipsP"><i></i><i></i><i></i></span></div>
+      <div class="chip chip-player"><span class="pname" id="nameP">TÚ</span><span class="pill" id="rachaBadge">RACHA 0</span></div>
       <div class="hand-wrap" id="wrapP">
         <div class="aura"></div>
         <div class="shadow-el"></div>
-        <div class="hand" id="handP">
+        <div class="slide" id="slideP"><div class="hand" id="handP">
           <svg class="pose pose-rock active" viewBox="0 0 220 220"><use href="#pose-rock"/></svg>
           <svg class="pose pose-paper" viewBox="0 0 220 220"><use href="#pose-paper"/></svg>
           <svg class="pose pose-scissors" viewBox="0 0 220 220"><use href="#pose-scissors"/></svg>
-        </div>
+        </div></div>
       </div>
     </div>
 
     <div id="centerLine"><span class="vs"><b>VS</b></span></div>
 
     <div class="zone zone-ai" id="zoneA">
-      <div class="chip chip-ai"><span class="pips" id="pipsA"><i></i><i></i><i></i></span><span class="pname" id="nameA">CPU</span></div>
+      <div class="chip chip-ai"><span class="pill pill-red" id="threatBadge">NIVEL 1</span><span class="pname" id="nameA">NÉMESIS</span></div>
       <div class="hand-wrap" id="wrapA">
         <div class="aura"></div>
         <div class="shadow-el"></div>
-        <div class="hand" id="handA">
+        <div class="slide" id="slideA"><div class="hand" id="handA">
           <svg class="pose pose-rock active" viewBox="0 0 220 220"><use href="#pose-rock"/></svg>
           <svg class="pose pose-paper" viewBox="0 0 220 220"><use href="#pose-paper"/></svg>
           <svg class="pose pose-scissors" viewBox="0 0 220 220"><use href="#pose-scissors"/></svg>
-        </div>
+        </div></div>
       </div>
     </div>
 
     <div id="roundBanner"></div>
-    <div id="cpuStatus">🤖 CPU…</div>
+    <div id="threatBar"><span class="tlabel">AMENAZA</span><span class="tsegs" id="threatSegs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+    <div id="cpuStatus">NÉMESIS</div>
     <div id="chant"><span id="chantWord" class="outl"></span></div>
     <div id="fx"></div>
   </main>
@@ -807,14 +888,14 @@ body.portrait #rotateOverlay{display:flex}
 <!-- Fin de partida -->
 <div id="matchOverlay">
   <div class="m-inner">
-    <div id="mTrophy">🏆</div>
-    <div id="mTitle" class="outl">¡VICTORIA!</div>
-    <div id="mScore">2 – 0</div>
-    <div id="mReward">🪙 +<b id="mRewardNum">0</b></div>
+    <div id="mEmblem" class="emblema defeat"><span class="ring"></span><span class="star"></span><span class="cross"></span></div>
+    <div id="mTitle" class="outl">FIN DEL DESAFÍO</div>
+    <div id="mScore">RACHA 0</div>
+    <div id="mReward"><i class="coin"></i> +<b id="mRewardNum">0</b></div>
     <div id="mSub">…</div>
     <div class="m-btns">
-      <button id="btnAgain" class="mbtn-big mbtn-again">OTRA PARTIDA ▶</button>
-      <button id="btnHome" class="mbtn-big mbtn-home">🏠 MENÚ</button>
+      <button id="btnAgain" class="mbtn-big mbtn-again">REINTENTAR</button>
+      <button id="btnHome" class="mbtn-big mbtn-home">MENÚ</button>
     </div>
   </div>
 </div>
@@ -829,11 +910,11 @@ body.portrait #rotateOverlay{display:flex}
         <svg viewBox="0 0 220 220"><use id="avatarUse" href="#pose-rock"/></svg>
       </div>
       <div class="pinfo">
-        <input id="nameInput" maxlength="12" spellcheck="false" autocomplete="off" aria-label="Tu nombre">
-        <div class="precord" id="pRecord">🏆 0 · 0</div>
+        <div id="menuName">JUGADOR</div>
+        <div class="precord" id="pRecord">RACHA MÁXIMA: 0</div>
       </div>
     </div>
-    <div class="coins-chip" id="coinsChip">🪙 <span id="coinsMenu">0</span></div>
+    <div class="coins-chip" id="coinsChip"><i class="coin"></i><span id="coinsMenu">0</span></div>
   </div>
   <div class="menu-center">
     <div class="menu-hands" id="menuHands">
@@ -844,18 +925,13 @@ body.portrait #rotateOverlay{display:flex}
     <h1 class="logo">
       <span class="w-rock outl">PIEDRA</span><span class="w-xx">·</span><span class="w-paper outl">PAPEL</span><span class="w-xx">·</span><span class="w-sci outl">TIJERAS</span>
     </h1>
-    <p class="tagline">MEJOR DE 3 · CPU CON IA QUE APRENDE · GANA 🪙 Y SKINS</p>
-    <div class="diff-row" id="diffRow">
-      <button class="diff-pill" data-diff="easy">😎 FÁCIL</button>
-      <button class="diff-pill active" data-diff="normal">🤖 NORMAL</button>
-      <button class="diff-pill" data-diff="hard">👹 DIFÍCIL</button>
-    </div>
+    <p class="tagline">EL DESAFÍO · LA MÁQUINA APRENDE DE CADA MOVIMIENTO</p>
     <div class="menu-btns">
-      <button id="btnPlay" class="mbtn mbtn-play">▶ JUGAR VS CPU</button>
-      <button id="btnShop" class="mbtn mbtn-shop">🛍️ TIENDA</button>
+      <button id="btnPlay" class="mbtn mbtn-play">JUGAR EL DESAFÍO</button>
+      <button id="btnShop" class="mbtn mbtn-shop">TIENDA</button>
     </div>
   </div>
-  <p class="menu-foot">La CPU aprende de tus patrones entre rondas — despiéstiala y gana 🪙<br>Gana partidas para desbloquear skins</p>
+  <p class="menu-foot">Cada racha hace a la NÉMESIS más lista y te paga mejor<br>Gana monedas y desbloquea skins en la tienda</p>
 </div>
 
 <!-- ========== TIENDA ========== -->
@@ -863,7 +939,7 @@ body.portrait #rotateOverlay{display:flex}
   <div class="shop-panel">
     <div class="shop-head">
       <h2>🛍️ TIENDA</h2>
-      <div class="coins-chip">🪙 <span id="coinsShop">0</span></div>
+      <div class="coins-chip"><i class="coin"></i><span id="coinsShop">0</span></div>
       <button id="btnShopClose" class="shop-close" aria-label="Cerrar tienda">✕</button>
     </div>
     <div class="shop-tabs">
@@ -873,6 +949,16 @@ body.portrait #rotateOverlay{display:flex}
     </div>
     <div class="shop-grid" id="shopGrid"></div>
     <div class="shop-foot" id="shopFoot">Toca una skin para comprarla o equiparla</div>
+  </div>
+</div>
+
+<!-- ========== PRIMER INICIO: TU NOMBRE (solo una vez) ========== -->
+<div id="nameScreen" class="hide">
+  <div class="name-card glass">
+    <h2>¿CÓMO TE LLAMAS?</h2>
+    <input id="nameField" maxlength="12" spellcheck="false" autocomplete="off" placeholder="Tu nombre">
+    <button id="btnName" class="mbtn-big mbtn-again">COMENZAR</button>
+    <p class="name-hint">Solo te lo preguntaré una vez</p>
   </div>
 </div>
 
@@ -888,7 +974,7 @@ body.portrait #rotateOverlay{display:flex}
     </svg>
   </div>
   <h2>GIRA TU DISPOSITIVO</h2>
-  <p id="rotateText">Este juego solo funciona en horizontal 🔄</p>
+  <p id="rotateText">Este juego solo funciona en horizontal</p>
 </div>
 
 <script>
@@ -911,21 +997,17 @@ const DETALLE = {
 const NAMES = { rock:'piedra', paper:'papel', scissors:'tijeras' };
 const SAVE_KEY = 'ppt_save_v2';
 
-/* Dificultades: IA que contrarresta predicciones con probabilidad "iq" */
-const DIFFS = {
-  easy:   { label:'FÁCIL',   name:'CPU NOVATA',  glove:'g_classic', sleeve:'s_blue',   aura:'a_blue',   iq:.32, tier:1, reward:40  },
-  normal: { label:'NORMAL',  name:'CPU PRO',     glove:'g_cyan',    sleeve:'s_purple', aura:'a_purple', iq:.62, tier:2, reward:75  },
-  hard:   { label:'DIFÍCIL', name:'CPU DEMONIO', glove:'g_lava',    sleeve:'s_black',  aura:'a_red',    iq:.88, tier:3, reward:150 },
-};
+/* La única rival: NÉMESIS. Su potencia escala con el NIVEL DE AMENAZA. */
+const CPU = { name:'NÉMESIS', glove:'g_lava', sleeve:'s_black', aura:'a_red' };
 
 /* ================== GUARDADO (localStorage seguro) ================== */
 const DEFAULT_SAVE = () => ({
   coins: 100,
-  diff: 'normal',
+  named: false,
   name: 'Jugador-' + (100 + Math.floor(Math.random() * 900)),
   owned: { gloves:['g_classic'], sleeves:['s_blue'], auras:['a_blue'] },
   eq: { glove:'g_classic', sleeve:'s_blue', aura:'a_blue' },
-  stats: { w:0, l:0 },
+  stats: { best:0, runs:0 },
   muted: false,
 });
 const store = {
@@ -935,8 +1017,7 @@ const store = {
 let save = Object.assign(DEFAULT_SAVE(), store.read() || {});
 save.owned = Object.assign({ gloves:['g_classic'], sleeves:['s_blue'], auras:['a_blue'] }, save.owned);
 save.eq    = Object.assign({ glove:'g_classic', sleeve:'s_blue', aura:'a_blue' }, save.eq);
-save.stats = Object.assign({ w:0, l:0 }, save.stats);
-if (!DIFFS[save.diff]) save.diff = 'normal';
+save.stats = Object.assign({ best:0, runs:0 }, save.stats);
 const persist = () => store.write(save);
 
 /* ================== CATÁLOGO DE SKINS ================== */
@@ -1000,8 +1081,8 @@ const CpuAI = (() => {
   const COUNTER = { rock:'paper', paper:'scissors', scissors:'rock' };
   const NEXT = { rock:'paper', paper:'scissors', scissors:'rock' };
   const PREV = { rock:'scissors', paper:'rock', scissors:'paper' };
-  const SCORE_DECAY = .93;
-  const WEIGHT_DECAY = .94;
+  const SCORE_DECAY = .96;
+  const WEIGHT_DECAY = .97;
 
   let H = [];                 // rondas: { p, a, r } (r = resultado para el jugador)
   const scores = {};          // puntuación de cada predictor (con olvido)
@@ -1025,9 +1106,9 @@ const CpuAI = (() => {
           tally[H[i].p] += w; tot += w;
         }
       }
-      if (tot < 1.6) return null;
+      if (tot < (k === 1 ? 1 : 1.25)) return null;   /* orden 1: aprende desde la 2a jugada */
       const best = argmax(tally);
-      return tally[best] / tot >= .58 ? best : null;
+      return tally[best] / tot >= .55 ? best : null;
     };
   }
   function cycleDetect(){
@@ -1052,11 +1133,11 @@ const CpuAI = (() => {
   }
   function freqBias(){
     const m = moves().slice(-24);
-    if (m.length < 6) return null;
+    if (m.length < 5) return null;
     const f = { rock:0, paper:0, scissors:0 };
     m.forEach(c => f[c]++);
     const best = argmax(f);
-    return f[best] - Math.min(f.rock, f.paper, f.scissors) >= 3 ? best : null;
+    return f[best] - Math.min(f.rock, f.paper, f.scissors) >= 2 ? best : null;
   }
 
   /* prioridad cuando nadie tiene puntos todavía */
@@ -1092,11 +1173,11 @@ const CpuAI = (() => {
     return MV[Math.floor(Math.random() * 3)];             // aleatorio puro
   }
 
-  function record(p, a){
+  function record(p, a, tier){
     if (!BEATS[p]) return;
     if (active){ trials++; if (active.move === p) hits++; }
     const r = p === a ? 'draw' : (BEATS[p] === a ? 'win' : 'lose');
-    for (const { id, fn } of enabled(DIFFS[save.diff].tier)){
+    for (const { id, fn } of enabled(tier || 3)){
       const m = fn();                                      // predijeron ANTES de esta jugada
       scores[id] = (scores[id] || 0) * SCORE_DECAY + (m === p ? 1 : (m ? -1 : 0));
     }
@@ -1110,11 +1191,11 @@ const CpuAI = (() => {
     get memory(){ return H.length; },
     readInfo(){ return { rate: trials ? Math.round(100 * hits / trials) : 0, trials }; },
     flavor(id, move){
-      if (id === 'freq' && move) return '🧠 Alguien adora la ' + NAMES[move].toUpperCase() + '…';
+      if (id === 'freq' && move) return 'Alguien adora la ' + NAMES[move].toUpperCase() + '…';
       const t = { mk2:'Memorizo tus secuencias…', mk1:'Tus repeticiones me delatan…',
                   mk3:'Tus combos son predecibles…', cycle:'Tu ciclo es tan obvio…',
                   wsls:'Ganas y repites, pierdes y cambias…' };
-      return '🧠 ' + (t[id] || 'Analizando tus patrones…');
+      return t[id] || 'Analizando tus patrones…';
     },
     reset(){ H = []; for (const k in scores) delete scores[k]; active = null; lastUsed = null; hits = 0; trials = 0; },
   };
@@ -1197,10 +1278,15 @@ const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} 
 const M = {
   phase: 'idle',           // idle | count | chant | reveal | banner | ended
   round: 0, remaining: ROUND_SECONDS,
-  wins: { me:0, opp:0 },
+  racha: 0, threat: 1, runCoins: 0,
   myChoice: null, oppChoice: null,
   paused: false,
 };
+/* Cuanto más ganas, más lista se vuelve la NÉMESIS */
+function threatParams(){
+  const t = M.threat;
+  return { iq: Math.min(.95, .5 + t * .045), tier: t >= 7 ? 3 : t >= 4 ? 2 : 1 };
+}
 const T = { round:null, next:null };
 
 /* ================== DOM ================== */
@@ -1211,13 +1297,15 @@ const el = {
   cdWrap:$('#cdWrap'), cdNum:$('#cdNum'), ring:$('#ringFg'), roundLabel:$('#roundLabel'),
   bigNum:$('#bigNum'), flash:$('#flash'), chant:$('#chant'), chantWord:$('#chantWord'),
   fx:$('#fx'), toast:$('#toast'), banner:$('#roundBanner'), cpuStatus:$('#cpuStatus'),
-  pipsP:$('#pipsP'), pipsA:$('#pipsA'), nameP:$('#nameP'), nameA:$('#nameA'),
-  matchOverlay:$('#matchOverlay'), mTrophy:$('#mTrophy'), mTitle:$('#mTitle'),
+  rachaBadge:$('#rachaBadge'), threatBadge:$('#threatBadge'), threatSegs:$('#threatSegs'),
+  nameP:$('#nameP'), nameA:$('#nameA'),
+  matchOverlay:$('#matchOverlay'), mEmblem:$('#mEmblem'), mTitle:$('#mTitle'),
   mScore:$('#mScore'), mReward:$('#mReward'), mRewardNum:$('#mRewardNum'), mSub:$('#mSub'),
   btnAgain:$('#btnAgain'), btnHome:$('#btnHome'),
   menu:$('#menuScreen'), btnPlay:$('#btnPlay'), btnShop:$('#btnShop'),
-  diffRow:$('#diffRow'),
-  nameInput:$('#nameInput'), pRecord:$('#pRecord'), coinsMenu:$('#coinsMenu'),
+  menuName:$('#menuName'), pRecord:$('#pRecord'), coinsMenu:$('#coinsMenu'),
+  nameScreen:$('#nameScreen'), nameField:$('#nameField'), btnName:$('#btnName'),
+  slideP:$('#slideP'), slideA:$('#slideA'),
   coinsChip:$('#coinsChip'), coinsShop:$('#coinsShop'), avatarBox:$('#avatarBox'),
   menuHands:$('#menuHands'),
   shop:$('#shopOverlay'), shopGrid:$('#shopGrid'), shopFoot:$('#shopFoot'),
@@ -1293,9 +1381,10 @@ function banner(text, type){
   el.banner.classList.add('show', 'rb-' + type);
 }
 function hideBanner(){ el.banner.classList.remove('show'); }
-function updatePips(){
-  $$('i', el.pipsP).forEach((p, i) => p.classList.toggle('on', i < M.wins.me));
-  $$('i', el.pipsA).forEach((p, i) => p.classList.toggle('on', i < M.wins.opp));
+function updateBadges(){
+  el.rachaBadge.textContent = 'RACHA ' + M.racha;
+  el.threatBadge.textContent = 'NIVEL ' + M.threat;
+  $$('i', el.threatSegs).forEach((s, i) => s.classList.toggle('on', i < M.threat));
 }
 function bumpCoins(){
   el.coinsChip.classList.remove('bump'); reflow(el.coinsChip); el.coinsChip.classList.add('bump');
@@ -1325,7 +1414,7 @@ function applySkins(){
   });
   el.coinsMenu.textContent = save.coins;
   el.coinsShop.textContent = save.coins;
-  el.pRecord.textContent = `🏆 ${save.stats.w} · ${save.stats.l}`;
+  el.pRecord.textContent = 'RACHA MÁXIMA: ' + (save.stats.best || 0);
 }
 function applyOppSkins(p){
   const g = skinById('gloves', p.glove);
@@ -1339,7 +1428,8 @@ function applyOppSkins(p){
 /* ================== MOTOR DE RONDA ================== */
 function resetRoundVisuals(){
   [el.wrapP, el.wrapA].forEach(w => w.classList.remove('pumping','thrust','picked'));
-  [el.zoneP, el.zoneA].forEach(z => z.classList.remove('hot','winner','loser'));
+  [el.zoneP, el.zoneA].forEach(z => z.classList.remove('hot','winner','loser','charge','burst'));
+  [el.slideP, el.slideA].forEach(s => s.classList.remove('round-in'));
   setPose('p','rock'); setPose('a','rock');
   cpuQuiet();
 }
@@ -1361,14 +1451,15 @@ function beginRound(n){
   el.cdWrap.classList.remove('hidden','danger');
   el.cdNum.textContent = String(ROUND_SECONDS);
   el.ring.style.strokeDashoffset = 0;
-  el.roundLabel.textContent = `RONDA ${n} · PRIMERO A 2`;
+  el.roundLabel.textContent = `RONDA ${n} · RACHA ${M.racha}`;
   el.arena.classList.remove('round-in'); reflow(el.arena); el.arena.classList.add('round-in');
+  [el.slideP, el.slideA].forEach(s => { s.classList.remove('round-in'); reflow(s); s.classList.add('round-in'); });
   Sfx.tick(); buzz(12);
   cpuSay(M.round === 1 || CpuAI.memory < 2
-    ? '🤖 ' + M.opp.name + ' te observa…'
+    ? 'NÉMESIS te observa…'
     : (CpuAI.lastUsed
         ? CpuAI.flavor(CpuAI.lastUsed.id, CpuAI.lastUsed.move)
-        : '🧠 ' + M.opp.name + ' analiza tus patrones…'));
+        : 'NÉMESIS memoriza cada movimiento tuyo…'));
   scheduleTick(1000);
 }
 function scheduleTick(ms){
@@ -1392,6 +1483,7 @@ function tick(){
     bigNumber(String(n));
     Sfx.bigTick(); buzz(35);
     kick(1); shake();
+    [el.zoneP, el.zoneA].forEach(z => z.classList.add('charge'));
     scheduleTick(1000);
   } else {                                      // 0 → ¡YA!
     el.cdWrap.classList.add('hidden');
@@ -1409,7 +1501,7 @@ function autoPick(){
   M.myChoice = opts[Math.floor(Math.random() * opts.length)];
   const btn = $(`.choice-btn[data-choice="${M.myChoice}"]`);
   if (btn) btn.classList.add('selected','auto');
-  toast('⏱️ ¡Tiempo agotado! Elección aleatoria');
+  toast('¡Tiempo agotado! Elección aleatoria');
 }
 function choose(choice, btn){
   if (M.phase !== 'count' || M.myChoice) return;
@@ -1432,11 +1524,15 @@ function startChant(){
   words.forEach((w, i) => {
     setTimeout(()=>{
       if (M.phase !== 'chant') return;
-      el.chantWord.className = 'outl ' + w[1];
+      el.chantWord.className = w[1];
       el.chantWord.textContent = w[0];
       reflow(el.chantWord);
       el.chantWord.classList.add('pop');
-      Sfx.pump(); buzz(15);
+      kick(1);
+      const line = $('#centerLine');
+      line.classList.remove('flare'); reflow(line); line.classList.add('flare');
+      [el.zoneP, el.zoneA].forEach(z => { z.classList.add('burst'); setTimeout(()=>z.classList.remove('burst'), 150); });
+      Sfx.pump(); buzz(18);
     }, i * 400);
   });
   [el.wrapP, el.wrapA].forEach(w => w.classList.add('pumping'));
@@ -1447,8 +1543,10 @@ function reveal(){
   M.phase = 'reveal';
   cpuQuiet();
   el.chant.classList.remove('on');
-  /* la CPU predice según tu historial y contrarresta */
-  const aiChoice = CpuAI.pick(DIFFS[save.diff].iq, DIFFS[save.diff].tier);
+  [el.zoneP, el.zoneA].forEach(z => z.classList.remove('charge'));
+  /* la NÉMESIS predice según tu historial y contrarresta */
+  const tp = threatParams();
+  const aiChoice = CpuAI.pick(tp.iq, tp.tier);
   M.oppChoice = aiChoice;
   setPose('p', M.myChoice);
   setPose('a', aiChoice);
@@ -1468,70 +1566,76 @@ function impactFx(){
 
 function roundResult(myC, oppC){
   M.phase = 'banner';
-  CpuAI.record(myC, oppC);                      // la IA aprende de TU jugada
+  const tp = threatParams();
+  CpuAI.record(myC, oppC, tp.tier);             // la NÉMESIS aprende de TU jugada
   const winner = myC === oppC ? 'draw' : (BEATS[myC] === oppC ? 'me' : 'opp');
-  if (winner === 'me') M.wins.me++;
-  else if (winner === 'opp') M.wins.opp++;
-  updatePips();
   if (winner === 'me'){ el.zoneP.classList.add('winner'); el.zoneA.classList.add('loser'); }
   else if (winner === 'opp'){ el.zoneA.classList.add('winner'); el.zoneP.classList.add('loser'); }
-  if (winner === 'me'){ banner('🏆 ¡RONDA GANADA!', 'win'); Sfx.rwin(); buzz([20,40,20]); }
-  else if (winner === 'opp'){
-    banner('💥 RONDA PERDIDA', 'lose'); Sfx.rlose(); buzz(80);
+  if (winner === 'me'){
+    M.racha++;
+    M.threat = Math.min(10, M.threat + 1);
+    const gain = 15 + (M.threat - 1) * 10;
+    M.runCoins += gain; save.coins += gain; persist();
+    updateBadges();
+    banner(`RONDA ${M.round} SUPERADA · NIVEL ${M.threat} · +${gain}`, 'win');
+    Sfx.rwin(); buzz([20,40,20]);
+    setTimeout(()=>{ Sfx.coin(); bumpCoins(); }, 500);
+  } else if (winner === 'opp'){
+    banner('LA NÉMESIS GANA LA RONDA', 'lose'); Sfx.rlose(); buzz(80);
     if (CpuAI.lastActive && CpuAI.lastActive.move === myC)
-      cpuSay('🧠 ¡Predijo tu ' + NAMES[myC].toUpperCase() + '!');
+      cpuSay('¡Predijo tu ' + NAMES[myC].toUpperCase() + '!');
+  } else {
+    banner('EMPATE · SE REPITE LA RONDA', 'draw'); Sfx.rdraw(); buzz(25);
   }
-  else { banner('🤝 EMPATE — SE REPITE', 'draw'); Sfx.rdraw(); buzz(25); }
-  const over = M.wins.me >= 2 || M.wins.opp >= 2;
+  const over = winner === 'opp';
   T.next = setTimeout(()=>{
-    if (over) endMatch(M.wins.me >= 2);
+    if (over) endRun();
     else beginRound(M.round + 1);
-  }, over ? 2000 : 2900);
+  }, over ? 2200 : 2900);
 }
 
-/* ================== PARTIDA ================== */
-function startMatch(){
+/* ================== EL DESAFÍO ================== */
+function beginRun(){
   Sfx.init(); Sfx.click(); buzz(15);
   M.phase = 'idle';
-  M.wins = { me:0, opp:0 }; M.round = 0;
+  M.racha = 0; M.threat = 1; M.runCoins = 0; M.round = 0;
   M.myChoice = null; M.oppChoice = null;
-  const d = DIFFS[save.diff];
-  M.opp = { name:d.name, glove:d.glove, sleeve:d.sleeve, aura:d.aura };
+  M.opp = { name:CPU.name, glove:CPU.glove, sleeve:CPU.sleeve, aura:CPU.aura };
   el.menu.classList.add('hide');
   el.matchOverlay.classList.remove('show');
   $$('.confetti', el.matchOverlay).forEach(c => c.remove());
-  el.nameP.textContent = 'TÚ';
-  el.nameA.textContent = d.name;
+  el.nameP.textContent = save.name;
+  el.nameA.textContent = CPU.name;
   applyOppSkins(M.opp);
-  updatePips();
+  updateBadges();
   setTimeout(()=>beginRound(1), 550);
 }
-function endMatch(won){
+function endRun(){
   if (M.phase === 'ended') return;
   M.phase = 'ended';
   cpuQuiet(); hideBanner();
   el.cdWrap.classList.add('hidden');
-  const d = DIFFS[save.diff];
-  let reward = 0;
-  if (won){ save.stats.w++; reward = d.reward; save.coins += reward; }
-  else save.stats.l++;
+  save.stats.runs++;
+  const record = M.racha > (save.stats.best || 0);
+  if (record) save.stats.best = M.racha;
   persist();
-  el.mTrophy.textContent = won ? '🏆' : '💀';
-  el.mTitle.textContent = won ? '¡VICTORIA!' : 'DERROTA';
-  el.mTitle.className = 'outl ' + (won ? 'mt-win' : 'mt-lose');
-  el.mScore.textContent = `TÚ ${M.wins.me} – ${M.wins.opp} ${M.opp.name}`;
   const ri = CpuAI.readInfo();
   const readTxt = ri.trials >= 2 ? ` · Te leyó el ${ri.rate}%` : '';
-  if (won) el.mSub.textContent = `¡Has vencido a ${M.opp.name} al mejor de 3!${readTxt}`;
-  else el.mSub.textContent = `${M.opp.name} ha leído tus patrones… ¡cámbialos y revancha!${readTxt}`;
-  if (reward > 0){
+  el.mEmblem.className = 'emblema ' + (record ? 'victory' : 'defeat');
+  el.mTitle.textContent = record ? '¡NUEVO RÉCORD!' : 'FIN DEL DESAFÍO';
+  el.mTitle.className = 'outl ' + (record ? 'mt-win' : 'mt-lose');
+  el.mScore.textContent = `RACHA ${M.racha} · MEJOR ${save.stats.best}`;
+  el.mSub.textContent = record
+    ? `La NÉMESIS cae ${M.racha} veces seguidas${readTxt}`
+    : `La NÉMESIS te leyó los patrones${readTxt}`;
+  if (M.runCoins > 0){
     el.mReward.classList.add('show');
     el.mRewardNum.textContent = '0';
-    animateCount(el.mRewardNum, reward, 900);
-    setTimeout(()=>{ Sfx.coin(); bumpCoins(); }, 350);
+    animateCount(el.mRewardNum, M.runCoins, 900);
+    setTimeout(()=>{ Sfx.coin(); }, 350);
   } else el.mReward.classList.remove('show');
   el.matchOverlay.classList.add('show');
-  if (won){ Sfx.matchWin(); buzz([40,60,40,60]); confetti(); }
+  if (record){ Sfx.matchWin(); buzz([40,60,40,60]); confetti(); }
   else { Sfx.matchLose(); buzz(120); }
   applySkins();
 }
@@ -1552,12 +1656,12 @@ function goMenu(){
   resetRoundVisuals(); unlockButtons(); hideBanner();
   el.cdWrap.classList.add('hidden');
   el.footer.classList.add('locked');
-  el.nameP.textContent = 'TÚ'; el.nameA.textContent = 'CPU';
-  M.wins = { me:0, opp:0 }; updatePips();
+  el.nameP.textContent = save.name; el.nameA.textContent = CPU.name;
+  M.racha = 0; M.threat = 1; updateBadges();
   el.menu.classList.remove('hide');
   applySkins();
 }
-function playAgain(){ startMatch(); }
+function playAgain(){ beginRun(); }
 
 /* ================== TIENDA ================== */
 let shopCat = 'gloves';
@@ -1580,7 +1684,7 @@ function renderShop(){
       prev = `<svg viewBox="0 0 220 220" style="${st}"><use href="#pose-paper"/></svg>`;
     }
     const priceHtml = sk.price === 0 ? '<span class="sprice free">GRATIS</span>'
-      : `<span class="sprice">🪙 ${sk.price}</span>`;
+      : `<span class="sprice"><i class="coin"></i>${sk.price}</span>`;
     let state;
     if (equipped) state = '<span class="sstate st-equipped">EQUIPADA</span>';
     else if (owned) state = '<span class="sstate st-equip">EQUIPAR</span>';
@@ -1598,42 +1702,40 @@ function shopClick(cat, sk){
     save.eq[eqKey] = sk.id; persist();
     applySkins(); renderShop();
     Sfx.click(); buzz(12);
-    toast('✨ ' + sk.name + ' equipada');
+    toast(sk.name + ' equipada');
   } else if (save.coins >= sk.price){
     save.coins -= sk.price;
     save.owned[cat].push(sk.id);
     save.eq[eqKey] = sk.id; persist();
     applySkins(); renderShop();
     Sfx.buy(); buzz([20,30,20]);
-    toast('🎉 ¡Skin desbloqueada: ' + sk.name + '!');
+    toast('¡Skin desbloqueada: ' + sk.name + '!');
   } else {
     Sfx.sad();
-    toast('🪙 Te faltan monedas — ¡gana partidas!', 2200);
+    toast('Te faltan monedas: gana rondas en el desafío', 2200);
   }
 }
 function openShop(){ renderShop(); el.shop.classList.add('show'); Sfx.click(); }
 function closeShop(){ el.shop.classList.remove('show'); Sfx.click(); }
 
 /* ================== MENÚ ================== */
-function setDiff(d){
-  if (!DIFFS[d]) return;
-  save.diff = d; persist();
-  $$('.diff-pill', el.diffRow).forEach(b => b.classList.toggle('active', b.dataset.diff === d));
-  Sfx.click(); buzz(10);
+function submitName(){
+  const v = el.nameField.value.trim().slice(0, 12);
+  save.name = v || ('Jugador-' + (100 + Math.floor(Math.random() * 900)));
+  save.named = true;
+  persist();
+  el.menuName.textContent = save.name;
+  el.nameScreen.classList.add('hide');
+  Sfx.init(); Sfx.buy(); buzz([20,30,20]);
 }
 function initMenu(){
-  el.nameInput.value = save.name;
-  $$('.diff-pill', el.diffRow).forEach(b => {
-    b.classList.toggle('active', b.dataset.diff === save.diff);
-    b.addEventListener('pointerdown', e => { e.preventDefault(); setDiff(b.dataset.diff); });
-  });
   applySkins();
-  el.nameInput.addEventListener('change', () => {
-    const v = el.nameInput.value.trim().slice(0, 12);
-    save.name = v || ('Jugador-' + (100 + Math.floor(Math.random() * 900)));
-    el.nameInput.value = save.name;
-    persist();
-  });
+  el.menuName.textContent = save.name;
+  el.pRecord.textContent = 'RACHA MÁXIMA: ' + (save.stats.best || 0);
+  if (!save.named){
+    el.nameScreen.classList.remove('hide');
+    setTimeout(()=>{ try{ el.nameField.focus(); }catch(e){} }, 250);
+  }
 }
 
 /* ================== PANTALLA COMPLETA + ORIENTACIÓN ================== */
@@ -1656,7 +1758,7 @@ async function tryImmersive(){
 let immersiveTried = false;
 function beginGame(){
   if (!immersiveTried){ immersiveTried = true; tryImmersive(); }
-  startMatch();
+  beginRun();
 }
 
 const isPortrait = () => window.innerHeight > window.innerWidth * 1.02;
@@ -1683,7 +1785,7 @@ window.addEventListener('resize', checkOrientation);
 window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 150));
 document.addEventListener('visibilitychange', () => document.hidden ? pauseGame() : resumeGame());
 if (!('ontouchstart' in window) && !navigator.maxTouchPoints){
-  $('#rotateText').textContent = 'Este juego solo funciona en horizontal: amplia la ventana o gira el móvil 🔄';
+  $('#rotateText').textContent = 'Este juego solo funciona en horizontal: amplia la ventana o gira el móvil';
 }
 
 /* ================== EVENTOS ================== */
@@ -1695,6 +1797,8 @@ el.btnPlay.addEventListener(onBtn, e => { e.preventDefault(); beginGame(); });
 el.btnShop.addEventListener(onBtn, e => { e.preventDefault(); openShop(); });
 el.btnShopClose.addEventListener(onBtn, e => { e.preventDefault(); closeShop(); });
 el.btnAgain.addEventListener(onBtn, e => { e.preventDefault(); Sfx.click(); playAgain(); });
+el.btnName.addEventListener(onBtn, e => { e.preventDefault(); submitName(); });
+el.nameField.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); submitName(); } });
 el.btnHome.addEventListener(onBtn, e => { e.preventDefault(); Sfx.click(); goMenu(); });
 el.btnMute.addEventListener(onBtn, e => {
   e.preventDefault(); e.stopPropagation();
@@ -1712,6 +1816,7 @@ window.addEventListener('keydown', e => {
     choose(c, $(`.choice-btn[data-choice="${c}"]`));
   } else if (e.key === 'Enter' || e.key === ' '){
     if (el.matchOverlay.classList.contains('show')) playAgain();
+    else if (!el.nameScreen.classList.contains('hide')) submitName();
     else if (!el.menu.classList.contains('hide')) beginGame();
   }
 });
@@ -1726,11 +1831,11 @@ checkOrientation();
 
 /* API interna para pruebas */
 window.__ppt = {
-  M, save, Sfx, CpuAI, DIFFS, BEATS, ROUND_SECONDS, SKINS,
+  M, save, Sfx, CpuAI, CPU, BEATS, ROUND_SECONDS, SKINS,
   fns: {
-    beginRound, tick, choose, startChant, reveal, roundResult, endMatch,
-    startMatch, goMenu, playAgain, autoPick, applySkins, setDiff,
-    renderShop, shopClick, openShop, closeShop, setPose, beginGame,
+    beginRound, tick, choose, startChant, reveal, roundResult, endRun,
+    beginRun, goMenu, playAgain, autoPick, applySkins, submitName,
+    renderShop, shopClick, openShop, closeShop, setPose, beginGame, threatParams,
   },
 };
 })();
