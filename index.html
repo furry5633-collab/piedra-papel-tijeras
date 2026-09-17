@@ -893,9 +893,9 @@ const SAVE_KEY = 'ppt_save_v2';
 
 /* Dificultades: IA que contrarresta predicciones con probabilidad "iq" */
 const DIFFS = {
-  easy:   { label:'FÁCIL',   name:'CPU NOVATA',   glove:'g_classic', sleeve:'s_blue',   aura:'a_blue',   iq:.35, reward:40  },
-  normal: { label:'NORMAL',  name:'CPU PRO',      glove:'g_cyan',    sleeve:'s_purple', aura:'a_purple', iq:.62, reward:75  },
-  hard:   { label:'DIFÍCIL', name:'CPU DEMONIO',  glove:'g_lava',    sleeve:'s_black',  aura:'a_red',    iq:.86, reward:150 },
+  easy:   { label:'FÁCIL',   name:'CPU NOVATA',  glove:'g_classic', sleeve:'s_blue',   aura:'a_blue',   iq:.32, tier:1, reward:40  },
+  normal: { label:'NORMAL',  name:'CPU PRO',     glove:'g_cyan',    sleeve:'s_purple', aura:'a_purple', iq:.62, tier:2, reward:75  },
+  hard:   { label:'DIFÍCIL', name:'CPU DEMONIO', glove:'g_lava',    sleeve:'s_black',  aura:'a_red',    iq:.88, tier:3, reward:150 },
 };
 
 /* ================== GUARDADO (localStorage seguro) ================== */
@@ -966,67 +966,137 @@ const hexToRgba = (hex, a) => {
   return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
 };
 
-/* ================== IA DE LA CPU ==================
-   Aprende tus patrones y contrarresta lo que va a jugar:
-   - Cadena de Markov de orden 2 (tus dos últimas jugadas -> siguiente)
-   - Cadena de Markov de orden 1 (tu última jugada -> siguiente)
-   - Frecuencia global si tienes un sesgo claro
-   - La dificultad (iq) decide cuántas veces usa la predicción;
-     el resto de las jugadas son aleatorias puras (impredecible). */
+/* ================== IA DE LA CPU (ensemble de predictores) ==================
+   Seis modelos compiten por predecir tu siguiente jugada; la CPU escucha al
+   que más acierta (con memoria que se olvida de lo antiguo):
+   - Markov 1/2/3: tu(s) última(s) jugada(s) -> siguiente (con pesos recientes)
+   - Ciclo: detecta rotación piedra->papel->tijeras (o la inversa)
+   - WSLS: "ganas y repites, pierdes y cambias" (comportamiento humano típico)
+   - Frecuencia: sesgo claro hacia una jugada concreta
+   La dificultad activa más modelos y decide cuánto usa la predicción; el resto
+   del tiempo juega aleatorio puro (estrategia matemáticamente imbatible). */
 const CpuAI = (() => {
+  const MV = ['rock','paper','scissors'];
   const COUNTER = { rock:'paper', paper:'scissors', scissors:'rock' };
-  let h = [];                       // historial del jugador en esta sesión
-  const t1 = new Map();             // orden 1
-  const t2 = new Map();             // orden 2
-  let lastPredicted = null;
-  let lastCorrect = false;
+  const NEXT = { rock:'paper', paper:'scissors', scissors:'rock' };
+  const PREV = { rock:'scissors', paper:'rock', scissors:'paper' };
+  const SCORE_DECAY = .93;
+  const WEIGHT_DECAY = .94;
 
-  const key = (a, b) => a + b;
-  function bump(map, k, v){
-    if (!map.has(k)) map.set(k, { rock:0, paper:0, scissors:0 });
-    map.get(k)[v]++;
-  }
-  const total = m => m.rock + m.paper + m.scissors;
-  const argmax = m => ['rock','paper','scissors'].reduce((a, b) => m[b] > m[a] ? b : a);
+  let H = [];                 // rondas: { p, a, r } (r = resultado para el jugador)
+  const scores = {};          // puntuación de cada predictor (con olvido)
+  let active = null;          // predicción usada en la ronda actual
+  let lastUsed = null;        // último predictor de confianza (para los mensajes)
+  let hits = 0, trials = 0;   // lecturas acertadas / rondas con predicción
 
-  function record(c){
-    if (!BEATS[c]) return;
-    if (h.length >= 1) bump(t1, h[h.length-1], c);
-    if (h.length >= 2) bump(t2, key(h[h.length-2], h[h.length-1]), c);
-    h.push(c);
+  const argmax = m => MV.reduce((a, b) => m[b] > m[a] ? b : a);
+  const moves = () => H.map(x => x.p);
+
+  /* ---- predictores: devuelven la jugada prevista o null ---- */
+  function markov(k){
+    return () => {
+      if (H.length < k + 1) return null;
+      const key = H.slice(H.length - k).map(x => x.p).join();
+      const tally = { rock:0, paper:0, scissors:0 };
+      let tot = 0;
+      for (let i = k; i < H.length; i++){
+        if (H.slice(i - k, i).map(x => x.p).join() === key){
+          const w = Math.pow(WEIGHT_DECAY, H.length - 1 - i);
+          tally[H[i].p] += w; tot += w;
+        }
+      }
+      if (tot < 1.6) return null;
+      const best = argmax(tally);
+      return tally[best] / tot >= .58 ? best : null;
+    };
   }
-  function predict(){
-    if (h.length >= 3){                                  // Markov orden 2
-      const m = t2.get(key(h[h.length-2], h[h.length-1]));
-      if (m && total(m) >= 2) return argmax(m);
+  function cycleDetect(){
+    const m = moves();
+    if (m.length < 5) return null;
+    const last = m.slice(-5);
+    let up = true, down = true;
+    for (let i = 1; i < last.length; i++){
+      if (NEXT[last[i-1]] !== last[i]) up = false;
+      if (PREV[last[i-1]] !== last[i]) down = false;
     }
-    if (h.length >= 1){                                  // Markov orden 1
-      const m = t1.get(h[h.length-1]);
-      if (m && total(m) >= 2) return argmax(m);
-    }
-    if (h.length >= 4){                                  // sesgo de frecuencia
-      const f = { rock:0, paper:0, scissors:0 };
-      h.forEach(c => f[c]++);
-      const best = argmax(f);
-      if (f[best] - Math.min(f.rock, f.paper, f.scissors) >= 3) return best;
-    }
-    return null;                                         // sin señal clara
+    if (up) return NEXT[m[m.length-1]];
+    if (down) return PREV[m[m.length-1]];
+    return null;
   }
-  function pick(iq){
-    lastPredicted = predict();
-    if (lastPredicted && Math.random() < iq){
-      lastCorrect = true;
-      return COUNTER[lastPredicted];                     // contrarresta la predicción
-    }
-    lastCorrect = false;
-    return ['rock','paper','scissors'][Math.floor(Math.random() * 3)];
+  function wsls(){                      // win-stay / lose-shift
+    if (!H.length) return null;
+    const { p, a, r } = H[H.length-1];
+    if (r === 'win') return p;                    // repite la ganadora
+    if (r === 'lose') return COUNTER[a];          // intentará batir lo que le batió
+    return null;
   }
+  function freqBias(){
+    const m = moves().slice(-24);
+    if (m.length < 6) return null;
+    const f = { rock:0, paper:0, scissors:0 };
+    m.forEach(c => f[c]++);
+    const best = argmax(f);
+    return f[best] - Math.min(f.rock, f.paper, f.scissors) >= 3 ? best : null;
+  }
+
+  /* prioridad cuando nadie tiene puntos todavía */
+  const PREDICTORS = [
+    { id:'mk2',   tier:2, fn:markov(2) },
+    { id:'mk1',   tier:1, fn:markov(1) },
+    { id:'mk3',   tier:3, fn:markov(3) },
+    { id:'cycle', tier:3, fn:cycleDetect },
+    { id:'wsls',  tier:2, fn:wsls },
+    { id:'freq',  tier:1, fn:freqBias },
+  ];
+  const enabled = maxTier => PREDICTORS.filter(p => p.tier <= maxTier);
+
+  function predict(maxTier = 3){
+    const list = enabled(maxTier).map(p => ({ id:p.id, move:p.fn() })).filter(x => x.move);
+    if (!list.length) return null;
+    let best = null;
+    for (const x of list){
+      if (best === null || (scores[x.id] || 0) > (scores[best.id] || 0)) best = x;
+    }
+    if ((scores[best.id] || 0) > 0) return best;          // gana el más fiable
+    for (const ref of PREDICTORS){                        // sin datos: prioridad fija
+      const x = list.find(v => v.id === ref.id);
+      if (x) return x;
+    }
+    return null;
+  }
+
+  function pick(iq, maxTier){
+    active = predict(maxTier);
+    if (active) lastUsed = { id:active.id, move:active.move };
+    if (active && Math.random() < iq) return COUNTER[active.move];
+    return MV[Math.floor(Math.random() * 3)];             // aleatorio puro
+  }
+
+  function record(p, a){
+    if (!BEATS[p]) return;
+    if (active){ trials++; if (active.move === p) hits++; }
+    const r = p === a ? 'draw' : (BEATS[p] === a ? 'win' : 'lose');
+    for (const { id, fn } of enabled(DIFFS[save.diff].tier)){
+      const m = fn();                                      // predijeron ANTES de esta jugada
+      scores[id] = (scores[id] || 0) * SCORE_DECAY + (m === p ? 1 : (m ? -1 : 0));
+    }
+    H.push({ p, a, r });
+  }
+
   return {
-    record, pick, predict,
-    get lastPredicted(){ return lastPredicted; },
-    get lastCorrect(){ return lastCorrect; },
-    get memory(){ return h.length; },
-    reset(){ h = []; t1.clear(); t2.clear(); lastPredicted = null; lastCorrect = false; },
+    pick, record, predict,
+    get lastActive(){ return active; },
+    get lastUsed(){ return lastUsed; },
+    get memory(){ return H.length; },
+    readInfo(){ return { rate: trials ? Math.round(100 * hits / trials) : 0, trials }; },
+    flavor(id, move){
+      if (id === 'freq' && move) return '🧠 Alguien adora la ' + NAMES[move].toUpperCase() + '…';
+      const t = { mk2:'Memorizo tus secuencias…', mk1:'Tus repeticiones me delatan…',
+                  mk3:'Tus combos son predecibles…', cycle:'Tu ciclo es tan obvio…',
+                  wsls:'Ganas y repites, pierdes y cambias…' };
+      return '🧠 ' + (t[id] || 'Analizando tus patrones…');
+    },
+    reset(){ H = []; for (const k in scores) delete scores[k]; active = null; lastUsed = null; hits = 0; trials = 0; },
   };
 })();
 
@@ -1276,7 +1346,9 @@ function beginRound(n){
   Sfx.tick(); buzz(12);
   cpuSay(M.round === 1 || CpuAI.memory < 2
     ? '🤖 ' + M.opp.name + ' te observa…'
-    : '🧠 ' + M.opp.name + ' analiza tus patrones…');
+    : (CpuAI.lastUsed
+        ? CpuAI.flavor(CpuAI.lastUsed.id, CpuAI.lastUsed.move)
+        : '🧠 ' + M.opp.name + ' analiza tus patrones…'));
   scheduleTick(1000);
 }
 function scheduleTick(ms){
@@ -1356,7 +1428,7 @@ function reveal(){
   cpuQuiet();
   el.chant.classList.remove('on');
   /* la CPU predice según tu historial y contrarresta */
-  const aiChoice = CpuAI.pick(DIFFS[save.diff].iq);
+  const aiChoice = CpuAI.pick(DIFFS[save.diff].iq, DIFFS[save.diff].tier);
   M.oppChoice = aiChoice;
   setPose('p', M.myChoice);
   setPose('a', aiChoice);
@@ -1376,7 +1448,7 @@ function impactFx(){
 
 function roundResult(myC, oppC){
   M.phase = 'banner';
-  CpuAI.record(myC);                            // la IA aprende de TU jugada
+  CpuAI.record(myC, oppC);                      // la IA aprende de TU jugada
   const winner = myC === oppC ? 'draw' : (BEATS[myC] === oppC ? 'me' : 'opp');
   if (winner === 'me') M.wins.me++;
   else if (winner === 'opp') M.wins.opp++;
@@ -1386,7 +1458,8 @@ function roundResult(myC, oppC){
   if (winner === 'me'){ banner('🏆 ¡RONDA GANADA!', 'win'); Sfx.rwin(); buzz([20,40,20]); }
   else if (winner === 'opp'){
     banner('💥 RONDA PERDIDA', 'lose'); Sfx.rlose(); buzz(80);
-    if (CpuAI.lastCorrect) cpuSay('🧠 ¡Predijo tu ' + NAMES[myC].toUpperCase() + '!');
+    if (CpuAI.lastActive && CpuAI.lastActive.move === myC)
+      cpuSay('🧠 ¡Predijo tu ' + NAMES[myC].toUpperCase() + '!');
   }
   else { banner('🤝 EMPATE — SE REPITE', 'draw'); Sfx.rdraw(); buzz(25); }
   const over = M.wins.me >= 2 || M.wins.opp >= 2;
@@ -1427,8 +1500,10 @@ function endMatch(won){
   el.mTitle.textContent = won ? '¡VICTORIA!' : 'DERROTA';
   el.mTitle.className = 'outl ' + (won ? 'mt-win' : 'mt-lose');
   el.mScore.textContent = `TÚ ${M.wins.me} – ${M.wins.opp} ${M.opp.name}`;
-  if (won) el.mSub.textContent = `¡Has vencido a ${M.opp.name} al mejor de 3!`;
-  else el.mSub.textContent = `${M.opp.name} ha leído tus patrones… ¡cámbialos y revancha!`;
+  const ri = CpuAI.readInfo();
+  const readTxt = ri.trials >= 2 ? ` · Te leyó el ${ri.rate}%` : '';
+  if (won) el.mSub.textContent = `¡Has vencido a ${M.opp.name} al mejor de 3!${readTxt}`;
+  else el.mSub.textContent = `${M.opp.name} ha leído tus patrones… ¡cámbialos y revancha!${readTxt}`;
   if (reward > 0){
     el.mReward.classList.add('show');
     el.mRewardNum.textContent = '0';
