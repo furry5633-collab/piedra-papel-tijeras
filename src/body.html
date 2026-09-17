@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✊</text></svg>">
-<title>⚡ Piedra, Papel o Tijeras — Multijugador</title>
+<title>⚡ Piedra, Papel o Tijeras — VS CPU con IA</title>
 <style>
 /*__CSS__*/
 </style>
@@ -142,7 +142,7 @@
     </div>
 
     <div id="roundBanner"></div>
-    <div id="waitLabel">⏳ Esperando al rival…</div>
+    <div id="cpuStatus">🤖 CPU…</div>
     <div id="chant"><span id="chantWord" class="outl"></span></div>
     <div id="fx"></div>
   </main>
@@ -217,32 +217,18 @@
     <h1 class="logo">
       <span class="w-rock outl">PIEDRA</span><span class="w-xx">·</span><span class="w-paper outl">PAPEL</span><span class="w-xx">·</span><span class="w-sci outl">TIJERAS</span>
     </h1>
-    <p class="tagline">MULTIJUGADOR ONLINE · MEJOR DE 3 · GANA 🪙 Y SKINS</p>
+    <p class="tagline">MEJOR DE 3 · CPU CON IA QUE APRENDE · GANA 🪙 Y SKINS</p>
+    <div class="diff-row" id="diffRow">
+      <button class="diff-pill" data-diff="easy">😎 FÁCIL</button>
+      <button class="diff-pill active" data-diff="normal">🤖 NORMAL</button>
+      <button class="diff-pill" data-diff="hard">👹 DIFÍCIL</button>
+    </div>
     <div class="menu-btns">
-      <button id="btnOnline" class="mbtn mbtn-online">🌐 MULTIJUGADOR</button>
-      <button id="btnCpu" class="mbtn mbtn-cpu">🤖 VS CPU</button>
+      <button id="btnPlay" class="mbtn mbtn-play">▶ JUGAR VS CPU</button>
       <button id="btnShop" class="mbtn mbtn-shop">🛍️ TIENDA</button>
     </div>
   </div>
-  <p class="menu-foot">Gana partidas para conseguir monedas y desbloquear skins<br><span id="srvState"></span></p>
-</div>
-
-<!-- ========== BÚSQUEDA DE RIVAL ========== -->
-<div id="searchOverlay">
-  <div class="radar">
-    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
-    <div class="sweep"></div>
-    <div class="dot" style="left:24%;top:30%"></div>
-    <div class="dot" style="left:66%;top:58%;animation-delay:.5s"></div>
-    <div class="dot" style="left:52%;top:20%;animation-delay:1s"></div>
-  </div>
-  <h2 id="searchTitle" class="outl">BUSCANDO RIVAL…</h2>
-  <div id="searchTime">0:00</div>
-  <div id="searchNotice">😢 <b>Nadie más está jugando ahora mismo.</b><br>Sigue esperando o prueba contra la CPU.</div>
-  <div class="search-btns">
-    <button id="btnSearchCpu" class="sbtn sbtn-cpu">🤖 VS CPU</button>
-    <button id="btnSearchCancel" class="sbtn sbtn-cancel">✕ CANCELAR</button>
-  </div>
+  <p class="menu-foot">La CPU aprende de tus patrones entre rondas — despiéstiala y gana 🪙<br>Gana partidas para desbloquear skins</p>
 </div>
 
 <!-- ========== TIENDA ========== -->

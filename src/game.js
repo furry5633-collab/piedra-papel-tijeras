@@ -15,12 +15,19 @@ const DETALLE = {
   'scissors>paper': 'Las tijeras CORTAN el papel',
 };
 const NAMES = { rock:'piedra', paper:'papel', scissors:'tijeras' };
-const REWARD = { online: 200, cpu: 75 };  // monedas por ganar una partida
 const SAVE_KEY = 'ppt_save_v2';
+
+/* Dificultades: IA que contrarresta predicciones con probabilidad "iq" */
+const DIFFS = {
+  easy:   { label:'FÁCIL',   name:'CPU NOVATA',   glove:'g_classic', sleeve:'s_blue',   aura:'a_blue',   iq:.35, reward:40  },
+  normal: { label:'NORMAL',  name:'CPU PRO',      glove:'g_cyan',    sleeve:'s_purple', aura:'a_purple', iq:.62, reward:75  },
+  hard:   { label:'DIFÍCIL', name:'CPU DEMONIO',  glove:'g_lava',    sleeve:'s_black',  aura:'a_red',    iq:.86, reward:150 },
+};
 
 /* ================== GUARDADO (localStorage seguro) ================== */
 const DEFAULT_SAVE = () => ({
   coins: 100,
+  diff: 'normal',
   name: 'Jugador-' + (100 + Math.floor(Math.random() * 900)),
   owned: { gloves:['g_classic'], sleeves:['s_blue'], auras:['a_blue'] },
   eq: { glove:'g_classic', sleeve:'s_blue', aura:'a_blue' },
@@ -35,6 +42,7 @@ let save = Object.assign(DEFAULT_SAVE(), store.read() || {});
 save.owned = Object.assign({ gloves:['g_classic'], sleeves:['s_blue'], auras:['a_blue'] }, save.owned);
 save.eq    = Object.assign({ glove:'g_classic', sleeve:'s_blue', aura:'a_blue' }, save.eq);
 save.stats = Object.assign({ w:0, l:0 }, save.stats);
+if (!DIFFS[save.diff]) save.diff = 'normal';
 const persist = () => store.write(save);
 
 /* ================== CATÁLOGO DE SKINS ================== */
@@ -83,6 +91,70 @@ const hexToRgba = (hex, a) => {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
 };
+
+/* ================== IA DE LA CPU ==================
+   Aprende tus patrones y contrarresta lo que va a jugar:
+   - Cadena de Markov de orden 2 (tus dos últimas jugadas -> siguiente)
+   - Cadena de Markov de orden 1 (tu última jugada -> siguiente)
+   - Frecuencia global si tienes un sesgo claro
+   - La dificultad (iq) decide cuántas veces usa la predicción;
+     el resto de las jugadas son aleatorias puras (impredecible). */
+const CpuAI = (() => {
+  const COUNTER = { rock:'paper', paper:'scissors', scissors:'rock' };
+  let h = [];                       // historial del jugador en esta sesión
+  const t1 = new Map();             // orden 1
+  const t2 = new Map();             // orden 2
+  let lastPredicted = null;
+  let lastCorrect = false;
+
+  const key = (a, b) => a + b;
+  function bump(map, k, v){
+    if (!map.has(k)) map.set(k, { rock:0, paper:0, scissors:0 });
+    map.get(k)[v]++;
+  }
+  const total = m => m.rock + m.paper + m.scissors;
+  const argmax = m => ['rock','paper','scissors'].reduce((a, b) => m[b] > m[a] ? b : a);
+
+  function record(c){
+    if (!BEATS[c]) return;
+    if (h.length >= 1) bump(t1, h[h.length-1], c);
+    if (h.length >= 2) bump(t2, key(h[h.length-2], h[h.length-1]), c);
+    h.push(c);
+  }
+  function predict(){
+    if (h.length >= 3){                                  // Markov orden 2
+      const m = t2.get(key(h[h.length-2], h[h.length-1]));
+      if (m && total(m) >= 2) return argmax(m);
+    }
+    if (h.length >= 1){                                  // Markov orden 1
+      const m = t1.get(h[h.length-1]);
+      if (m && total(m) >= 2) return argmax(m);
+    }
+    if (h.length >= 4){                                  // sesgo de frecuencia
+      const f = { rock:0, paper:0, scissors:0 };
+      h.forEach(c => f[c]++);
+      const best = argmax(f);
+      if (f[best] - Math.min(f.rock, f.paper, f.scissors) >= 3) return best;
+    }
+    return null;                                         // sin señal clara
+  }
+  function pick(iq){
+    lastPredicted = predict();
+    if (lastPredicted && Math.random() < iq){
+      lastCorrect = true;
+      return COUNTER[lastPredicted];                     // contrarresta la predicción
+    }
+    lastCorrect = false;
+    return ['rock','paper','scissors'][Math.floor(Math.random() * 3)];
+  }
+  return {
+    record, pick, predict,
+    get lastPredicted(){ return lastPredicted; },
+    get lastCorrect(){ return lastCorrect; },
+    get memory(){ return h.length; },
+    reset(){ h = []; t1.clear(); t2.clear(); lastPredicted = null; lastCorrect = false; },
+  };
+})();
 
 /* ================== SONIDO ================== */
 const Sfx = (() => {
@@ -143,7 +215,6 @@ const Sfx = (() => {
     rlose(){   tone({f:220, f2:130, dur:.28, type:'sawtooth', vol:.2}); },
     rdraw(){   tone({f:440, dur:.12, type:'square', vol:.22});
                tone({f:440, dur:.16, type:'square', vol:.22, when:.14}); },
-    found(){   [440,554,659,880].forEach((f,i)=>tone({f, dur:.12, type:'triangle', vol:.4, when:i*.07})); },
     coin(){    tone({f:1318, dur:.09, type:'square', vol:.3});
                tone({f:1760, dur:.18, type:'square', vol:.3, when:.09}); },
     buy(){     tone({f:784, dur:.1, type:'triangle', vol:.4});
@@ -160,17 +231,13 @@ const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} 
 
 /* ================== ESTADO ================== */
 const M = {
-  mode: null,            // 'cpu' | 'online' | null
-  phase: 'idle',         // idle | count | chant | waitopp | reveal | banner | ended
+  phase: 'idle',           // idle | count | chant | reveal | banner | ended
   round: 0, remaining: ROUND_SECONDS,
   wins: { me:0, opp:0 },
   myChoice: null, oppChoice: null,
-  you: 'p1',             // papel en el servidor (online)
-  opp: { name:'CPU', glove:'g_classic', sleeve:'s_red', aura:'a_red' },
-  pendingReveal: null,
-  paused: false, started: false,
+  paused: false,
 };
-const T = { round:null, next:null, search:null, searchTimer:null };
+const T = { round:null, next:null };
 
 /* ================== DOM ================== */
 const el = {
@@ -179,19 +246,18 @@ const el = {
   zoneP:$('#zoneP'), zoneA:$('#zoneA'),
   cdWrap:$('#cdWrap'), cdNum:$('#cdNum'), ring:$('#ringFg'), roundLabel:$('#roundLabel'),
   bigNum:$('#bigNum'), flash:$('#flash'), chant:$('#chant'), chantWord:$('#chantWord'),
-  fx:$('#fx'), toast:$('#toast'), banner:$('#roundBanner'), waitLabel:$('#waitLabel'),
+  fx:$('#fx'), toast:$('#toast'), banner:$('#roundBanner'), cpuStatus:$('#cpuStatus'),
   pipsP:$('#pipsP'), pipsA:$('#pipsA'), nameP:$('#nameP'), nameA:$('#nameA'),
   matchOverlay:$('#matchOverlay'), mTrophy:$('#mTrophy'), mTitle:$('#mTitle'),
   mScore:$('#mScore'), mReward:$('#mReward'), mRewardNum:$('#mRewardNum'), mSub:$('#mSub'),
   btnAgain:$('#btnAgain'), btnHome:$('#btnHome'),
-  menu:$('#menuScreen'), btnOnline:$('#btnOnline'), btnCpu:$('#btnCpu'), btnShop:$('#btnShop'),
+  menu:$('#menuScreen'), btnPlay:$('#btnPlay'), btnShop:$('#btnShop'),
+  diffRow:$('#diffRow'),
   nameInput:$('#nameInput'), pRecord:$('#pRecord'), coinsMenu:$('#coinsMenu'),
   coinsChip:$('#coinsChip'), coinsShop:$('#coinsShop'), avatarBox:$('#avatarBox'),
   menuHands:$('#menuHands'),
-  search:$('#searchOverlay'), searchTime:$('#searchTime'), searchNotice:$('#searchNotice'),
-  btnSearchCpu:$('#btnSearchCpu'), btnSearchCancel:$('#btnSearchCancel'),
   shop:$('#shopOverlay'), shopGrid:$('#shopGrid'), shopFoot:$('#shopFoot'),
-  btnShopClose:$('#btnShopClose'), btnMute:$('#btnMute'), srvState:$('#srvState'),
+  btnShopClose:$('#btnShopClose'), btnMute:$('#btnMute'),
 };
 
 /* ================== AYUDAS VISUALES ================== */
@@ -272,6 +338,11 @@ function bumpCoins(){
   el.coinsMenu.textContent = save.coins;
   el.coinsShop.textContent = save.coins;
 }
+function cpuSay(txt){
+  el.cpuStatus.textContent = txt;
+  el.cpuStatus.classList.add('show');
+}
+function cpuQuiet(){ el.cpuStatus.classList.remove('show'); }
 
 /* ================== SKINS: APLICAR ================== */
 function applySkins(){
@@ -303,10 +374,10 @@ function applyOppSkins(p){
 
 /* ================== MOTOR DE RONDA ================== */
 function resetRoundVisuals(){
-  [el.wrapP, el.wrapA].forEach(w => w.classList.remove('pumping','thrust','picked','waiting'));
+  [el.wrapP, el.wrapA].forEach(w => w.classList.remove('pumping','thrust','picked'));
   [el.zoneP, el.zoneA].forEach(z => z.classList.remove('hot','winner','loser'));
   setPose('p','rock'); setPose('a','rock');
-  el.waitLabel.classList.remove('show');
+  cpuQuiet();
 }
 function unlockButtons(){
   el.footer.classList.remove('locked');
@@ -321,7 +392,7 @@ function beginRound(n){
   clearTimeout(T.round); clearTimeout(T.next);
   M.phase = 'count';
   M.round = n; M.remaining = ROUND_SECONDS;
-  M.myChoice = null; M.oppChoice = null; M.pendingReveal = null;
+  M.myChoice = null; M.oppChoice = null;
   resetRoundVisuals(); unlockButtons(); hideBanner();
   el.cdWrap.classList.remove('hidden','danger');
   el.cdNum.textContent = String(ROUND_SECONDS);
@@ -329,6 +400,9 @@ function beginRound(n){
   el.roundLabel.textContent = `RONDA ${n} · PRIMERO A 2`;
   el.arena.classList.remove('round-in'); reflow(el.arena); el.arena.classList.add('round-in');
   Sfx.tick(); buzz(12);
+  cpuSay(M.round === 1 || CpuAI.memory < 2
+    ? '🤖 ' + M.opp.name + ' te observa…'
+    : '🧠 ' + M.opp.name + ' analiza tus patrones…');
   scheduleTick(1000);
 }
 function scheduleTick(ms){
@@ -369,14 +443,12 @@ function autoPick(){
   M.myChoice = opts[Math.floor(Math.random() * opts.length)];
   const btn = $(`.choice-btn[data-choice="${M.myChoice}"]`);
   if (btn) btn.classList.add('selected','auto');
-  if (M.mode === 'online') Net.send({ t:'choice', n:M.round, choice:M.myChoice });
   toast('⏱️ ¡Tiempo agotado! Elección aleatoria');
 }
 function choose(choice, btn){
   if (M.phase !== 'count' || M.myChoice) return;
   Sfx.init();
   M.myChoice = choice;
-  if (M.mode === 'online') Net.send({ t:'choice', n:M.round, choice });
   Sfx.select(); buzz(20);
   btn.classList.add('selected');
   lockButtons();
@@ -402,46 +474,24 @@ function startChant(){
     }, i * 400);
   });
   [el.wrapP, el.wrapA].forEach(w => w.classList.add('pumping'));
-  setTimeout(()=>{ if(!M.paused) afterChant(); }, 400 * 3 + 130);
+  setTimeout(()=>{ if(!M.paused) reveal(); }, 400 * 3 + 130);
 }
-function afterChant(){
+function reveal(){
   if (M.phase !== 'chant') return;
-  el.chant.classList.remove('on');
-  if (M.mode === 'cpu'){
-    const ai = ['rock','paper','scissors'][Math.floor(Math.random() * 3)];
-    doReveal(M.myChoice, ai);
-  } else {
-    if (M.pendingReveal) consumeReveal();
-    else {
-      M.phase = 'waitopp';
-      el.waitLabel.classList.add('show');
-      [el.wrapP, el.wrapA].forEach(w => { w.classList.remove('pumping'); w.classList.add('waiting'); });
-    }
-  }
-}
-function consumeReveal(){
-  const rv = M.pendingReveal;
-  M.pendingReveal = null;
-  const mine = M.you === 'p1' ? rv.p1 : rv.p2;
-  const theirs = M.you === 'p1' ? rv.p2 : rv.p1;
-  const winner = rv.winner === 'draw' ? 'draw' : (rv.winner === M.you ? 'me' : 'opp');
-  doReveal(mine, theirs, winner);
-}
-
-function doReveal(myC, oppC, serverWinner){
   M.phase = 'reveal';
-  M.oppChoice = oppC;
-  el.waitLabel.classList.remove('show');
+  cpuQuiet();
   el.chant.classList.remove('on');
-  setPose('p', myC); setPose('a', oppC);
+  /* la CPU predice según tu historial y contrarresta */
+  const aiChoice = CpuAI.pick(DIFFS[save.diff].iq);
+  M.oppChoice = aiChoice;
+  setPose('p', M.myChoice);
+  setPose('a', aiChoice);
   el.zoneA.classList.add('hot');
-  [el.wrapP, el.wrapA].forEach(w => { w.classList.remove('pumping','waiting'); });
+  [el.wrapP, el.wrapA].forEach(w => w.classList.remove('pumping'));
   el.wrapP.classList.add('thrust');
   el.wrapA.classList.add('thrust');
   setTimeout(()=>{ if (M.phase === 'reveal') impactFx(); }, 220);
-  const local = myC === oppC ? 'draw' : (BEATS[myC] === oppC ? 'me' : 'opp');
-  const winner = serverWinner || local;
-  setTimeout(()=>{ if (M.phase === 'reveal') roundResult(winner, myC, oppC); }, 1150);
+  setTimeout(()=>{ if (M.phase === 'reveal') roundResult(M.myChoice, aiChoice); }, 1150);
 }
 function impactFx(){
   Sfx.impact(); buzz(70);
@@ -450,106 +500,70 @@ function impactFx(){
   sparks(16, ['#ffffff','#8FE3FF','#FFD93D','#B7C6FF','#FF9DB0']);
 }
 
-function roundResult(winner, myC, oppC){
+function roundResult(myC, oppC){
   M.phase = 'banner';
-  const p = myC, a = oppC;
+  CpuAI.record(myC);                            // la IA aprende de TU jugada
+  const winner = myC === oppC ? 'draw' : (BEATS[myC] === oppC ? 'me' : 'opp');
   if (winner === 'me') M.wins.me++;
   else if (winner === 'opp') M.wins.opp++;
   updatePips();
   if (winner === 'me'){ el.zoneP.classList.add('winner'); el.zoneA.classList.add('loser'); }
   else if (winner === 'opp'){ el.zoneA.classList.add('winner'); el.zoneP.classList.add('loser'); }
   if (winner === 'me'){ banner('🏆 ¡RONDA GANADA!', 'win'); Sfx.rwin(); buzz([20,40,20]); }
-  else if (winner === 'opp'){ banner('💥 RONDA PERDIDA', 'lose'); Sfx.rlose(); buzz(80); }
+  else if (winner === 'opp'){
+    banner('💥 RONDA PERDIDA', 'lose'); Sfx.rlose(); buzz(80);
+    if (CpuAI.lastCorrect) cpuSay('🧠 ¡Predijo tu ' + NAMES[myC].toUpperCase() + '!');
+  }
   else { banner('🤝 EMPATE — SE REPITE', 'draw'); Sfx.rdraw(); buzz(25); }
   const over = M.wins.me >= 2 || M.wins.opp >= 2;
-  if (M.mode === 'cpu'){
-    T.next = setTimeout(()=>{
-      if (over) endMatch(M.wins.me >= 2);
-      else beginRound(M.round + 1);
-    }, over ? 2000 : 2900);
-  }
-  /* online: el servidor envía la siguiente ronda o matchEnd */
+  T.next = setTimeout(()=>{
+    if (over) endMatch(M.wins.me >= 2);
+    else beginRound(M.round + 1);
+  }, over ? 2000 : 2900);
 }
 
 /* ================== PARTIDA ================== */
-function startMatch(mode){
+function startMatch(){
   Sfx.init(); Sfx.click(); buzz(15);
-  M.mode = mode; M.phase = 'idle';
+  M.phase = 'idle';
   M.wins = { me:0, opp:0 }; M.round = 0;
-  M.pendingReveal = null; M.myChoice = null; M.oppChoice = null;
+  M.myChoice = null; M.oppChoice = null;
+  const d = DIFFS[save.diff];
+  M.opp = { name:d.name, glove:d.glove, sleeve:d.sleeve, aura:d.aura };
   el.menu.classList.add('hide');
   el.matchOverlay.classList.remove('show');
   $$('.confetti', el.matchOverlay).forEach(c => c.remove());
   el.nameP.textContent = 'TÚ';
-  if (mode === 'cpu'){
-    const presets = [
-      { glove:'g_classic', sleeve:'s_red',    aura:'a_red' },
-      { glove:'g_lav',     sleeve:'s_purple', aura:'a_purple' },
-      { glove:'g_ruby',    sleeve:'s_black',  aura:'a_red' },
-      { glove:'g_cyan',    sleeve:'s_pink',   aura:'a_pink' },
-    ];
-    M.opp = Object.assign({ name:'CPU' }, presets[Math.floor(Math.random() * presets.length)]);
-    el.nameA.textContent = 'CPU';
-    applyOppSkins(M.opp);
-    updatePips();
-    setTimeout(()=>beginRound(1), 550);
-  }
-}
-function setupOnlineMatch(msg){
-  closeSearch();
-  M.mode = 'online'; M.phase = 'idle';
-  M.you = msg.you;
-  M.opp = msg.opp;
-  M.wins = { me:0, opp:0 }; M.round = 0;
-  M.pendingReveal = null;
-  el.menu.classList.add('hide');
-  el.matchOverlay.classList.remove('show');
-  el.nameP.textContent = 'TÚ';
-  el.nameA.textContent = M.opp.name || 'RIVAL';
+  el.nameA.textContent = d.name;
   applyOppSkins(M.opp);
   updatePips();
-  Sfx.found(); buzz([30,50,30]);
-  flashScreen(); kick(1);
-  banner('⚔️ VS ' + (M.opp.name || 'RIVAL').toUpperCase(), 'draw');
+  setTimeout(()=>beginRound(1), 550);
 }
-function endMatch(won, opts={}){
+function endMatch(won){
   if (M.phase === 'ended') return;
   M.phase = 'ended';
-  el.waitLabel.classList.remove('show');
-  hideBanner();
+  cpuQuiet(); hideBanner();
   el.cdWrap.classList.add('hidden');
+  const d = DIFFS[save.diff];
   let reward = 0;
-  if (opts.kind === 'conn'){
-    el.mTrophy.textContent = '📡';
-    el.mTitle.textContent = 'SIN CONEXIÓN';
-    el.mTitle.className = 'outl';
-    el.mTitle.style.color = '#FFD93D';
-    el.mSub.textContent = 'La partida se ha interrumpido';
-  } else {
-    if (won){ save.stats.w++; reward = REWARD[M.mode] || 0; save.coins += reward; }
-    else save.stats.l++;
-    persist();
-    el.mTrophy.textContent = won ? '🏆' : '💀';
-    el.mTitle.textContent = won ? '¡VICTORIA!' : 'DERROTA';
-    el.mTitle.className = 'outl ' + (won ? 'mt-win' : 'mt-lose');
-    el.mTitle.style.color = '';
-    el.mScore.textContent = `TÚ ${M.wins.me} – ${M.wins.opp} ${(M.opp && M.opp.name) || 'RIVAL'}`;
-    if (opts.abandoned) el.mSub.textContent = 'El rival abandonó la partida 😎';
-    else if (won) el.mSub.textContent = `¡Has ganado la partida al mejor de 3!`;
-    else el.mSub.textContent = 'El rival ha sido mejor… ¡revancha!';
-  }
+  if (won){ save.stats.w++; reward = d.reward; save.coins += reward; }
+  else save.stats.l++;
+  persist();
+  el.mTrophy.textContent = won ? '🏆' : '💀';
+  el.mTitle.textContent = won ? '¡VICTORIA!' : 'DERROTA';
+  el.mTitle.className = 'outl ' + (won ? 'mt-win' : 'mt-lose');
+  el.mScore.textContent = `TÚ ${M.wins.me} – ${M.wins.opp} ${M.opp.name}`;
+  if (won) el.mSub.textContent = `¡Has vencido a ${M.opp.name} al mejor de 3!`;
+  else el.mSub.textContent = `${M.opp.name} ha leído tus patrones… ¡cámbialos y revancha!`;
   if (reward > 0){
     el.mReward.classList.add('show');
     el.mRewardNum.textContent = '0';
     animateCount(el.mRewardNum, reward, 900);
     setTimeout(()=>{ Sfx.coin(); bumpCoins(); }, 350);
   } else el.mReward.classList.remove('show');
-  el.btnAgain.textContent = M.mode === 'online' ? '🔄 BUSCAR RIVAL' : '▶ OTRA PARTIDA';
   el.matchOverlay.classList.add('show');
-  if (opts.kind !== 'conn'){
-    if (won){ Sfx.matchWin(); buzz([40,60,40,60]); confetti(); }
-    else { Sfx.matchLose(); buzz(120); }
-  } else Sfx.sad();
+  if (won){ Sfx.matchWin(); buzz([40,60,40,60]); confetti(); }
+  else { Sfx.matchLose(); buzz(120); }
   applySkins();
 }
 function animateCount(node, target, ms){
@@ -563,11 +577,9 @@ function animateCount(node, target, ms){
 }
 function goMenu(){
   clearTimeout(T.round); clearTimeout(T.next);
-  M.phase = 'idle'; M.mode = null; M.pendingReveal = null;
-  Net.cancel();
+  M.phase = 'idle'; M.pendingReveal = null;
   el.matchOverlay.classList.remove('show');
   $$('.confetti', el.matchOverlay).forEach(c => c.remove());
-  closeSearch();
   resetRoundVisuals(); unlockButtons(); hideBanner();
   el.cdWrap.classList.add('hidden');
   el.footer.classList.add('locked');
@@ -576,119 +588,7 @@ function goMenu(){
   el.menu.classList.remove('hide');
   applySkins();
 }
-function playAgain(){
-  if (M.mode === 'online'){ el.matchOverlay.classList.remove('show'); beginOnline(); }
-  else startMatch('cpu');
-}
-
-/* ================== RED: MULTIJUGADOR ================== */
-const Net = {
-  ws: null, open: false, everConnected: false,
-  canOnline(){ return location.protocol === 'http:' || location.protocol === 'https:'; },
-  /* GitHub Pages y similares solo sirven archivos estáticos: sin server.js no hay online */
-  isStatic(){ return /(^|\.)github\.io$/.test(location.hostname) || location.hostname === 'raw.githubusercontent.com'; },
-  connect(){
-    return new Promise((res, rej) => {
-      if (this.ws && this.open) return res();
-      let settled = false;
-      try{ this.ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'); }
-      catch(e){ return rej(e); }
-      const onfail = () => { if(!settled){ settled = true; rej(new Error('ws')); } };
-      this.ws.onopen = () => { this.open = true; this.everConnected = true; if(!settled){ settled = true; res(); } };
-      this.ws.onerror = onfail;
-      this.ws.onclose = () => {
-        this.open = false;
-        onfail();
-        if (el.search.classList.contains('show') && M.mode !== 'online') searchConnLost();
-        else if (M.mode === 'online' && M.phase !== 'ended') endMatch(null, { kind:'conn' });
-      };
-      this.ws.onmessage = e => { try{ route(JSON.parse(e.data)); }catch(err){} };
-    });
-  },
-  send(obj){ if (this.open && this.ws && this.ws.readyState === 1){ this.ws.send(JSON.stringify(obj)); } },
-  cancel(){ this.send({ t:'cancelQueue' }); },
-};
-function route(m){
-  switch (m.t){
-    case 'round':
-      if (M.mode === 'online') beginRound(m.n);
-      break;
-    case 'reveal':
-      if (M.mode !== 'online' || m.n !== M.round) return;
-      M.pendingReveal = m;
-      if (M.phase === 'waitopp') consumeReveal();
-      break;
-    case 'found':
-      setupOnlineMatch(m);
-      break;
-    case 'waiting':
-      el.srvState.textContent = '';
-      break;
-    case 'nobody':
-      if (el.search.classList.contains('show')){
-        el.searchNotice.classList.add('show');
-        Sfx.sad(); buzz(60);
-      }
-      break;
-    case 'matchEnd': {
-      if (M.mode !== 'online') return;
-      const won = m.winner === M.you;
-      if (m.score){ M.wins.me = M.you === 'p1' ? m.score[0] : m.score[1];
-                    M.wins.opp = M.you === 'p1' ? m.score[1] : m.score[0]; updatePips(); }
-      endMatch(won);
-      break;
-    }
-    case 'oppLeft': {
-      if (M.mode !== 'online' || M.phase === 'ended') return;
-      if (m.score){ M.wins.me = M.you === 'p1' ? m.score[0] : m.score[1];
-                    M.wins.opp = M.you === 'p1' ? m.score[1] : m.score[0]; updatePips(); }
-      endMatch(true, { abandoned:true });
-      break;
-    }
-  }
-}
-
-/* ---- búsqueda de rival ---- */
-function beginOnline(){
-  if (!Net.canOnline()){
-    toast('🌐 El multijugador necesita abrir el juego desde el servidor (no como archivo local)', 4200);
-    return;
-  }
-  Sfx.init(); Sfx.click(); buzz(15);
-  el.search.classList.add('show');
-  el.searchNotice.classList.remove('show');
-  el.searchTime.textContent = '0:00';
-  const t0 = Date.now();
-  clearInterval(T.searchTimer);
-  T.searchTimer = setInterval(()=>{
-    const s = Math.floor((Date.now() - t0) / 1000);
-    el.searchTime.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-  }, 500);
-  Net.connect().then(() => {
-    Net.send({ t:'queue', profile:{ name: save.name, glove: save.eq.glove, sleeve: save.eq.sleeve, aura: save.eq.aura } });
-  }).catch(() => searchConnLost());
-  if (Net.isStatic()){
-    setTimeout(()=>{
-      if (el.search.classList.contains('show')){
-        el.searchNotice.innerHTML = 'ℹ️ <b>GitHub Pages no puede ejecutar el servidor multijugador.</b><br>Para jugar online: clona el repo y ejecuta <b>node server.js</b>.<br>Mientras tanto… ¡VS CPU!';
-        el.searchNotice.classList.add('show');
-      }
-    }, 1500);
-  }
-}
-function closeSearch(){
-  clearInterval(T.searchTimer);
-  el.search.classList.remove('show');
-}
-function cancelSearch(){
-  Net.cancel();
-  closeSearch();
-  Sfx.click();
-}
-function searchConnLost(){
-  el.searchNotice.innerHTML = '⚠️ <b>No se pudo conectar con el servidor.</b><br>Comprueba que server.js esté activo.';
-  el.searchNotice.classList.add('show');
-}
+function playAgain(){ startMatch(); }
 
 /* ================== TIENDA ================== */
 let shopCat = 'gloves';
@@ -746,8 +646,18 @@ function openShop(){ renderShop(); el.shop.classList.add('show'); Sfx.click(); }
 function closeShop(){ el.shop.classList.remove('show'); Sfx.click(); }
 
 /* ================== MENÚ ================== */
+function setDiff(d){
+  if (!DIFFS[d]) return;
+  save.diff = d; persist();
+  $$('.diff-pill', el.diffRow).forEach(b => b.classList.toggle('active', b.dataset.diff === d));
+  Sfx.click(); buzz(10);
+}
 function initMenu(){
   el.nameInput.value = save.name;
+  $$('.diff-pill', el.diffRow).forEach(b => {
+    b.classList.toggle('active', b.dataset.diff === save.diff);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); setDiff(b.dataset.diff); });
+  });
   applySkins();
   el.nameInput.addEventListener('change', () => {
     const v = el.nameInput.value.trim().slice(0, 12);
@@ -755,13 +665,6 @@ function initMenu(){
     el.nameInput.value = save.name;
     persist();
   });
-  if (Net.isStatic()){
-    el.srvState.textContent = 'ℹ️ GitHub Pages: el modo online necesita server.js — aquí puedes jugar VS CPU';
-    el.btnOnline.style.opacity = '.75';
-  } else if (!Net.canOnline()){
-    el.srvState.textContent = '⚠️ Ábrelo desde el servidor para jugar online';
-    el.btnOnline.style.opacity = '.55';
-  }
 }
 
 /* ================== PANTALLA COMPLETA + ORIENTACIÓN ================== */
@@ -782,19 +685,19 @@ async function tryImmersive(){
   if (fails.length) toast('⚠️ Tu navegador no permite ' + fails.join(' ni ') + '.', 3800);
 }
 let immersiveTried = false;
-function beginGameCpu(){
+function beginGame(){
   if (!immersiveTried){ immersiveTried = true; tryImmersive(); }
-  startMatch('cpu');
+  startMatch();
 }
 
 const isPortrait = () => window.innerHeight > window.innerWidth * 1.02;
-function pauseIfCpu(){
-  if (M.mode !== 'online' && M.phase !== 'idle' && M.phase !== 'ended' && !M.paused){
+function pauseGame(){
+  if (M.phase !== 'idle' && M.phase !== 'ended' && !M.paused){
     M.paused = true; clearTimeout(T.round); clearTimeout(T.next);
   }
 }
-function resumeIfCpu(){
-  if (M.paused && !isPortrait() && document.visibilityState === 'visible' && M.mode !== 'online'){
+function resumeGame(){
+  if (M.paused && !isPortrait() && document.visibilityState === 'visible'){
     M.paused = false;
     if (M.phase === 'count'){
       if (M.remaining <= 0) startChant();
@@ -805,11 +708,11 @@ function resumeIfCpu(){
 function checkOrientation(){
   const p = isPortrait();
   document.body.classList.toggle('portrait', p);
-  if (M.mode !== 'online') p ? pauseIfCpu() : resumeIfCpu();
+  p ? pauseGame() : resumeGame();
 }
 window.addEventListener('resize', checkOrientation);
 window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 150));
-document.addEventListener('visibilitychange', () => document.hidden ? pauseIfCpu() : resumeIfCpu());
+document.addEventListener('visibilitychange', () => document.hidden ? pauseGame() : resumeGame());
 if (!('ontouchstart' in window) && !navigator.maxTouchPoints){
   $('#rotateText').textContent = 'Este juego solo funciona en horizontal: amplia la ventana o gira el móvil 🔄';
 }
@@ -819,14 +722,9 @@ const onBtn = window.PointerEvent ? 'pointerdown' : 'click';
 $$('.choice-btn').forEach(b => {
   b.addEventListener(onBtn, e => { e.preventDefault(); choose(b.dataset.choice, b); });
 });
-el.btnCpu.addEventListener(onBtn, e => { e.preventDefault(); beginGameCpu(); });
-el.btnOnline.addEventListener(onBtn, e => { e.preventDefault(); beginOnline(); });
+el.btnPlay.addEventListener(onBtn, e => { e.preventDefault(); beginGame(); });
 el.btnShop.addEventListener(onBtn, e => { e.preventDefault(); openShop(); });
 el.btnShopClose.addEventListener(onBtn, e => { e.preventDefault(); closeShop(); });
-el.btnSearchCancel.addEventListener(onBtn, e => { e.preventDefault(); cancelSearch(); });
-el.btnSearchCpu.addEventListener(onBtn, e => {
-  e.preventDefault(); cancelSearch(); beginGameCpu();
-});
 el.btnAgain.addEventListener(onBtn, e => { e.preventDefault(); Sfx.click(); playAgain(); });
 el.btnHome.addEventListener(onBtn, e => { e.preventDefault(); Sfx.click(); goMenu(); });
 el.btnMute.addEventListener(onBtn, e => {
@@ -845,6 +743,7 @@ window.addEventListener('keydown', e => {
     choose(c, $(`.choice-btn[data-choice="${c}"]`));
   } else if (e.key === 'Enter' || e.key === ' '){
     if (el.matchOverlay.classList.contains('show')) playAgain();
+    else if (!el.menu.classList.contains('hide')) beginGame();
   }
 });
 document.addEventListener('dblclick', e => e.preventDefault());
@@ -858,11 +757,11 @@ checkOrientation();
 
 /* API interna para pruebas */
 window.__ppt = {
-  M, save, Sfx, Net, BEATS, ROUND_SECONDS, SKINS,
+  M, save, Sfx, CpuAI, DIFFS, BEATS, ROUND_SECONDS, SKINS,
   fns: {
-    beginRound, tick, choose, startChant, doReveal, roundResult, endMatch,
-    startMatch, beginOnline, goMenu, playAgain, autoPick, applySkins,
-    renderShop, shopClick, openShop, closeShop, setPose, beginGameCpu,
+    beginRound, tick, choose, startChant, reveal, roundResult, endMatch,
+    startMatch, goMenu, playAgain, autoPick, applySkins, setDiff,
+    renderShop, shopClick, openShop, closeShop, setPose, beginGame,
   },
 };
 })();
