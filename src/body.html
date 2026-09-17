@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070A18">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✊</text></svg>">
+<title>⚡ Piedra, Papel o Tijeras — Multijugador</title>
+<style>
+/*__CSS__*/
+</style>
+</head>
+<body>
+
+<!-- ========== MANOS + PATRONES DE SKINS (SVG reutilizable) ========== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- PIEDRA -->
+    <symbol id="pose-rock" viewBox="0 0 220 220">
+      <rect x="12" y="88" width="40" height="62" rx="12" fill="var(--sleeve,#3D7EFF)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+      <g fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)">
+        <rect x="112" y="54" width="52" height="32" rx="16"/>
+        <rect x="122" y="84" width="56" height="32" rx="16"/>
+        <rect x="122" y="114" width="56" height="32" rx="16"/>
+        <rect x="112" y="144" width="52" height="32" rx="16"/>
+      </g>
+      <rect x="44" y="48" width="108" height="134" rx="38" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+      <rect x="58" y="98" width="104" height="34" rx="17" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)" transform="rotate(6 110 115)"/>
+    </symbol>
+    <!-- PAPEL -->
+    <symbol id="pose-paper" viewBox="0 0 220 220">
+      <rect x="12" y="86" width="40" height="62" rx="12" fill="var(--sleeve,#3D7EFF)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+      <g fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)">
+        <rect x="86" y="44" width="64" height="24" rx="12" transform="rotate(-17 96 56)"/>
+        <rect x="90" y="74" width="78" height="26" rx="13" transform="rotate(-5 96 87)"/>
+        <rect x="90" y="104" width="74" height="26" rx="13" transform="rotate(7 96 117)"/>
+        <rect x="82" y="132" width="60" height="23" rx="11.5" transform="rotate(20 88 143)"/>
+        <rect x="66" y="150" width="50" height="22" rx="11" transform="rotate(43 74 161)"/>
+      </g>
+      <rect x="44" y="64" width="64" height="96" rx="24" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+    </symbol>
+    <!-- TIJERAS -->
+    <symbol id="pose-scissors" viewBox="0 0 220 220">
+      <rect x="12" y="88" width="40" height="62" rx="12" fill="var(--sleeve,#3D7EFF)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+      <g fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)">
+        <rect x="102" y="62" width="88" height="27" rx="13.5" transform="rotate(-14 110 75)"/>
+        <rect x="102" y="104" width="88" height="27" rx="13.5" transform="rotate(14 110 117)"/>
+        <rect x="118" y="140" width="48" height="28" rx="14"/>
+      </g>
+      <rect x="44" y="62" width="98" height="114" rx="32" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)"/>
+      <rect x="60" y="112" width="80" height="33" rx="16.5" fill="var(--glove,#fff)" stroke="var(--ink,#1B2142)" stroke-width="var(--sw,7)" transform="rotate(16 100 128)"/>
+    </symbol>
+
+    <!-- ====== Relleno de skins especiales ====== -->
+    <linearGradient id="pGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF3B0"/><stop offset=".35" stop-color="#FFD24D"/>
+      <stop offset=".65" stop-color="#E0A800"/><stop offset="1" stop-color="#FFDE6B"/>
+    </linearGradient>
+    <linearGradient id="pLava" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB300"/><stop offset=".5" stop-color="#FF5A00"/>
+      <stop offset="1" stop-color="#C81D00"/>
+    </linearGradient>
+    <linearGradient id="pIce" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F2FDFF"/><stop offset=".45" stop-color="#A5DFF7"/>
+      <stop offset="1" stop-color="#5FB7E0"/>
+    </linearGradient>
+    <linearGradient id="pToxic" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D6FF4D"/><stop offset=".5" stop-color="#8FE000"/>
+      <stop offset="1" stop-color="#4FA800"/>
+    </linearGradient>
+    <radialGradient id="pGalaxy" cx=".5" cy=".4" r=".9">
+      <stop offset="0" stop-color="#C9BCFF"/><stop offset=".45" stop-color="#6D5BE0"/>
+      <stop offset="1" stop-color="#181D4A"/>
+    </radialGradient>
+    <linearGradient id="pRainbow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF5A5A"/><stop offset=".2" stop-color="#FFB020"/>
+      <stop offset=".4" stop-color="#FFEA4D"/><stop offset=".6" stop-color="#3DDC84"/>
+      <stop offset=".8" stop-color="#38D0FF"/><stop offset="1" stop-color="#B07AFF"/>
+    </linearGradient>
+    <pattern id="pCandy" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="14" height="14" fill="#FF9AB6"/>
+      <rect width="7" height="14" fill="#FFFFFF"/>
+    </pattern>
+    <pattern id="pCammo" width="34" height="34" patternUnits="userSpaceOnUse">
+      <rect width="34" height="34" fill="#5B6B44"/>
+      <rect x="2" y="3" width="12" height="9" rx="4" fill="#41522F"/>
+      <rect x="18" y="12" width="13" height="10" rx="5" fill="#79875A"/>
+      <rect x="6" y="21" width="11" height="9" rx="4" fill="#333F24"/>
+      <rect x="24" y="0" width="9" height="8" rx="4" fill="#333F24"/>
+    </pattern>
+    <pattern id="pCarbon" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#1F2430"/>
+      <rect x="0" y="0" width="4" height="4" fill="#2E3547"/>
+      <rect x="5" y="5" width="4" height="4" fill="#2E3547"/>
+    </pattern>
+  </defs>
+</svg>
+
+<!-- ========== JUEGO ========== -->
+<div id="game">
+  <div id="hud">
+    <div id="cdWrap">
+      <svg viewBox="0 0 72 72" aria-hidden="true">
+        <circle class="ring-bg" cx="36" cy="36" r="30"/>
+        <circle id="ringFg" cx="36" cy="36" r="30" transform="rotate(-90 36 36)"/>
+      </svg>
+      <div id="cdNum">5</div>
+      <div id="roundLabel">RONDA 1 · PRIMERO A 2</div>
+    </div>
+  </div>
+
+  <main id="arena">
+    <div class="zone zone-player" id="zoneP">
+      <div class="chip chip-player"><span class="pname" id="nameP">TÚ</span><span class="pips" id="pipsP"><i></i><i></i><i></i></span></div>
+      <div class="hand-wrap" id="wrapP">
+        <div class="aura"></div>
+        <div class="shadow-el"></div>
+        <div class="hand" id="handP">
+          <svg class="pose pose-rock active" viewBox="0 0 220 220"><use href="#pose-rock"/></svg>
+          <svg class="pose pose-paper" viewBox="0 0 220 220"><use href="#pose-paper"/></svg>
+          <svg class="pose pose-scissors" viewBox="0 0 220 220"><use href="#pose-scissors"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div id="centerLine"><span class="vs"><b>VS</b></span></div>
+
+    <div class="zone zone-ai" id="zoneA">
+      <div class="chip chip-ai"><span class="pips" id="pipsA"><i></i><i></i><i></i></span><span class="pname" id="nameA">CPU</span></div>
+      <div class="hand-wrap" id="wrapA">
+        <div class="aura"></div>
+        <div class="shadow-el"></div>
+        <div class="hand" id="handA">
+          <svg class="pose pose-rock active" viewBox="0 0 220 220"><use href="#pose-rock"/></svg>
+          <svg class="pose pose-paper" viewBox="0 0 220 220"><use href="#pose-paper"/></svg>
+          <svg class="pose pose-scissors" viewBox="0 0 220 220"><use href="#pose-scissors"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div id="roundBanner"></div>
+    <div id="waitLabel">⏳ Esperando al rival…</div>
+    <div id="chant"><span id="chantWord" class="outl"></span></div>
+    <div id="fx"></div>
+  </main>
+
+  <footer id="choices">
+    <button class="choice-btn btn-rock" data-choice="rock" aria-label="Elegir piedra">
+      <svg class="bicon" viewBox="0 0 220 220" style="--sleeve:#FFB020" aria-hidden="true"><use href="#pose-rock"/></svg>
+      <span>PIEDRA</span>
+    </button>
+    <button class="choice-btn btn-paper" data-choice="paper" aria-label="Elegir papel">
+      <svg class="bicon" viewBox="0 0 220 220" style="--sleeve:#38D0FF" aria-hidden="true"><use href="#pose-paper"/></svg>
+      <span>PAPEL</span>
+    </button>
+    <button class="choice-btn btn-scissors" data-choice="scissors" aria-label="Elegir tijeras">
+      <svg class="bicon" viewBox="0 0 220 220" style="--sleeve:#3DDC84" aria-hidden="true"><use href="#pose-scissors"/></svg>
+      <span>TIJERAS</span>
+    </button>
+  </footer>
+
+  <button id="btnMute" aria-label="Activar o silenciar sonido">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/>
+      <path class="snd-on" d="M15.5 8.5a5 5 0 0 1 0 7"/>
+      <path class="snd-on" d="M18 6a8.5 8.5 0 0 1 0 12"/>
+      <line class="snd-off" x1="16" y1="9" x2="22" y2="15"/>
+      <line class="snd-off" x1="22" y1="9" x2="16" y2="15"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Contador gigante 3·2·1·¡YA! -->
+<div id="bigNum"></div>
+<div id="flash"></div>
+
+<!-- Fin de partida -->
+<div id="matchOverlay">
+  <div class="m-inner">
+    <div id="mTrophy">🏆</div>
+    <div id="mTitle" class="outl">¡VICTORIA!</div>
+    <div id="mScore">2 – 0</div>
+    <div id="mReward">🪙 +<b id="mRewardNum">0</b></div>
+    <div id="mSub">…</div>
+    <div class="m-btns">
+      <button id="btnAgain" class="mbtn-big mbtn-again">OTRA PARTIDA ▶</button>
+      <button id="btnHome" class="mbtn-big mbtn-home">🏠 MENÚ</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<!-- ========== MENÚ PRINCIPAL ========== -->
+<div id="menuScreen">
+  <div class="menu-top">
+    <div class="player-card glass">
+      <div class="avatar" id="avatarBox">
+        <svg viewBox="0 0 220 220"><use id="avatarUse" href="#pose-rock"/></svg>
+      </div>
+      <div class="pinfo">
+        <input id="nameInput" maxlength="12" spellcheck="false" autocomplete="off" aria-label="Tu nombre">
+        <div class="precord" id="pRecord">🏆 0 · 0</div>
+      </div>
+    </div>
+    <div class="coins-chip" id="coinsChip">🪙 <span id="coinsMenu">0</span></div>
+  </div>
+  <div class="menu-center">
+    <div class="menu-hands" id="menuHands">
+      <svg viewBox="0 0 220 220"><use href="#pose-rock"/></svg>
+      <svg viewBox="0 0 220 220"><use href="#pose-paper"/></svg>
+      <svg viewBox="0 0 220 220"><use href="#pose-scissors"/></svg>
+    </div>
+    <h1 class="logo">
+      <span class="w-rock outl">PIEDRA</span><span class="w-xx">·</span><span class="w-paper outl">PAPEL</span><span class="w-xx">·</span><span class="w-sci outl">TIJERAS</span>
+    </h1>
+    <p class="tagline">MULTIJUGADOR ONLINE · MEJOR DE 3 · GANA 🪙 Y SKINS</p>
+    <div class="menu-btns">
+      <button id="btnOnline" class="mbtn mbtn-online">🌐 MULTIJUGADOR</button>
+      <button id="btnCpu" class="mbtn mbtn-cpu">🤖 VS CPU</button>
+      <button id="btnShop" class="mbtn mbtn-shop">🛍️ TIENDA</button>
+    </div>
+  </div>
+  <p class="menu-foot">Gana partidas para conseguir monedas y desbloquear skins<br><span id="srvState"></span></p>
+</div>
+
+<!-- ========== BÚSQUEDA DE RIVAL ========== -->
+<div id="searchOverlay">
+  <div class="radar">
+    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+    <div class="sweep"></div>
+    <div class="dot" style="left:24%;top:30%"></div>
+    <div class="dot" style="left:66%;top:58%;animation-delay:.5s"></div>
+    <div class="dot" style="left:52%;top:20%;animation-delay:1s"></div>
+  </div>
+  <h2 id="searchTitle" class="outl">BUSCANDO RIVAL…</h2>
+  <div id="searchTime">0:00</div>
+  <div id="searchNotice">😢 <b>Nadie más está jugando ahora mismo.</b><br>Sigue esperando o prueba contra la CPU.</div>
+  <div class="search-btns">
+    <button id="btnSearchCpu" class="sbtn sbtn-cpu">🤖 VS CPU</button>
+    <button id="btnSearchCancel" class="sbtn sbtn-cancel">✕ CANCELAR</button>
+  </div>
+</div>
+
+<!-- ========== TIENDA ========== -->
+<div id="shopOverlay">
+  <div class="shop-panel">
+    <div class="shop-head">
+      <h2>🛍️ TIENDA</h2>
+      <div class="coins-chip">🪙 <span id="coinsShop">0</span></div>
+      <button id="btnShopClose" class="shop-close" aria-label="Cerrar tienda">✕</button>
+    </div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" data-cat="gloves">✊ GUANTES</button>
+      <button class="shop-tab" data-cat="sleeves">👕 MANGAS</button>
+      <button class="shop-tab" data-cat="auras">✨ AURAS</button>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <div class="shop-foot" id="shopFoot">Toca una skin para comprarla o equiparla</div>
+  </div>
+</div>
+
+<!-- Aviso: solo horizontal -->
+<div id="rotateOverlay">
+  <div class="phone-ico">
+    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <rect x="20" y="6" width="24" height="46" rx="5" fill="#232C5E" stroke="#8FA3FF" stroke-width="3"/>
+      <rect x="24" y="11" width="16" height="33" rx="2" fill="#070A18"/>
+      <circle cx="32" cy="48.5" r="2" fill="#8FA3FF"/>
+      <path d="M10 46c-4-3-6-9-4-15" stroke="#FFD93D" stroke-width="3" stroke-linecap="round"/>
+      <path d="M7 33l-1-6 6 1" stroke="#FFD93D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h2>GIRA TU DISPOSITIVO</h2>
+  <p id="rotateText">Este juego solo funciona en horizontal 🔄</p>
+</div>
+
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>
