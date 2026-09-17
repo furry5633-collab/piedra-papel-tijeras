@@ -8,14 +8,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/png" href="apple-touch-icon.png">
-<title>Piedra, Papel o Tijeras — El Desafío</title>
+<title>Piedra, Papel o Tijeras</title>
 
 <!-- ===== Compartir en redes (WhatsApp/Telegram/Discord/X…) ===== -->
-<meta name="description" content="Acepta el desafío: la máquina aprende de cada movimiento tuyo. Gana rondas seguidas, consigue monedas y desbloquea skins. ¿Hasta dónde llegarás?">
+<meta name="description" content="El clásico juego de toda la vida, rápido y táctil. Partidas al mejor de 3, monedas y skins para personalizar tus manos.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Piedra, Papel o Tijeras">
-<meta property="og:title" content="Piedra, Papel o Tijeras — El Desafío">
-<meta property="og:description" content="La máquina aprende de cada movimiento tuyo. Rondas seguidas, monedas y skins. ¿Hasta dónde llegarás?">
+<meta property="og:title" content="Piedra, Papel o Tijeras">
+<meta property="og:description" content="El clásico juego de toda la vida, rápido y táctil. Partidas al mejor de 3, monedas y skins para personalizar tus manos.">
 <meta property="og:url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/">
 <meta property="og:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
 <meta property="og:image:secure_url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
@@ -25,8 +25,8 @@
 <meta property="og:image:alt" content="Dos manos enfrentadas a ambos lados de una línea neón: la tuya azul contra la roja de la CPU. PIEDRA · PAPEL · TIJERAS">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Piedra, Papel o Tijeras — El Desafío">
-<meta name="twitter:description" content="La máquina aprende de cada movimiento tuyo. ¿Hasta dónde llegarás?">
+<meta name="twitter:title" content="Piedra, Papel o Tijeras">
+<meta name="twitter:description" content="El clásico juego de toda la vida, rápido y táctil. Partidas al mejor de 3, monedas y skins.">
 <meta name="twitter:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -182,12 +182,17 @@ input{font-family:inherit}
 }
 .chip-player{left:12px; border-color:rgba(86,196,255,.55); color:#CFE9FF}
 .chip-ai{right:12px; border-color:rgba(255,90,120,.55); color:#FFD9E1}
-.pill{
-  font-family:var(--font-display); font-weight:900; font-size:.72em; letter-spacing:.05em;
-  padding:2px 9px; border-radius:999px; white-space:nowrap;
-  background:rgba(61,220,132,.14); color:#8FE3B0; border:1px solid rgba(61,220,132,.55);
+.pips{display:flex; gap:4px}
+.pips i{
+  width:clamp(9px,1.9vh,13px); height:clamp(9px,1.9vh,13px); border-radius:50%;
+  border:2px solid rgba(255,255,255,.45); display:inline-block;
+  transition:background .2s, box-shadow .2s, transform .2s;
 }
-.pill-red{background:rgba(255,84,112,.13); color:#FF9DB0; border-color:rgba(255,84,112,.55)}
+.pips i.on{
+  background:var(--yellow); border-color:var(--yellow);
+  box-shadow:0 0 8px var(--yellow); transform:scale(1.15);
+}
+.chip-ai .pips i.on{background:var(--red2); border-color:var(--red2); box-shadow:0 0 8px var(--red2)}
 
 /* Manos */
 .hand-wrap{
@@ -279,18 +284,6 @@ input{font-family:inherit}
 #roundBanner.rb-win{border-color:var(--green); box-shadow:0 0 22px rgba(61,220,132,.4); color:#B8FFD9}
 #roundBanner.rb-lose{border-color:#FF5470; box-shadow:0 0 22px rgba(255,84,112,.4); color:#FFC9D4}
 #roundBanner.rb-draw{border-color:var(--yellow); box-shadow:0 0 22px rgba(255,217,61,.35); color:#FFEBAD}
-
-/* Estado de la CPU (analizando / predicción) */
-#cpuStatus{
-  position:absolute; bottom:46px; left:50%; transform:translateX(-50%);
-  z-index:22; padding:6px 16px; border-radius:999px;
-  background:rgba(10,14,30,.85); border:1px solid var(--glass-line);
-  font-weight:700; font-size:clamp(11px,2.1vh,15px); color:#BFCEFF;
-  display:none; animation:waitPulse 1.2s ease-in-out infinite;
-}
-#cpuStatus.show{display:block}
-@keyframes waitPulse{50%{opacity:.55}}
-
 /* ================= CONTADOR GIGANTE ================= */
 #bigNum{
   position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
@@ -552,22 +545,7 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
   color:#B9C4EA; font-weight:800; letter-spacing:.28em;
   font-size:clamp(9px,2vh,14px); text-align:center;
 }
-#threatBar{
-  position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:22;
-  display:flex; align-items:center; gap:9px; padding:5px 13px; border-radius:999px;
-  background:rgba(10,14,30,.85); border:1px solid var(--glass-line);
-}
-#threatBar .tlabel{font-size:clamp(8px,1.6vh,11px); font-weight:900; letter-spacing:.22em; color:#FF9DB0}
-.tsegs{display:flex; gap:3px}
-.tsegs i{
-  width:clamp(9px,1.8vw,13px); height:9px; border-radius:2.5px;
-  background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14);
-  transition:background .25s, box-shadow .25s;
-}
-.tsegs i.on{
-  background:linear-gradient(180deg,#FF7A93,#E4123A); border-color:transparent;
-  box-shadow:0 0 7px rgba(255,84,112,.65);
-}
+
 .menu-btns{display:flex; gap:clamp(10px,2.2vw,20px); margin-top:clamp(4px,1.4vh,12px); flex-wrap:wrap; justify-content:center}
 .mbtn{
   border:none; cursor:pointer; touch-action:manipulation;
@@ -607,8 +585,8 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
   box-shadow:0 24px 60px rgba(0,0,0,.6);
 }
 .shop-head{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:10px 16px; border-bottom:1px solid var(--glass-line);
+  flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:clamp(6px,1.4vh,10px) 14px; border-bottom:1px solid var(--glass-line);
   background:rgba(255,255,255,.03);
 }
 .shop-head h2{
@@ -620,7 +598,7 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
   background:rgba(12,17,40,.8); color:#fff; font-size:18px; font-weight:900; cursor:pointer;
 }
 .shop-close:active{transform:scale(.9)}
-.shop-tabs{display:flex; gap:8px; padding:10px 16px 0 16px}
+.shop-tabs{flex:none; display:flex; gap:8px; padding:clamp(6px,1.2vh,10px) 14px 0 14px}
 .shop-tab{
   flex:1; border:2px solid rgba(255,255,255,.18); border-bottom:none; border-radius:14px 14px 0 0;
   background:rgba(255,255,255,.04); color:#AAB6E8; cursor:pointer;
@@ -632,11 +610,12 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
   border-color:var(--yellow);
 }
 .shop-grid{
-  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y;
-  display:grid; gap:10px; padding:12px 14px 16px 14px;
-  grid-template-columns:repeat(auto-fill, minmax(clamp(86px,13vw,128px), 1fr));
+  flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y;
+  display:grid; gap:clamp(6px,1.2vh,10px); padding:clamp(8px,1.6vh,12px) 12px 14px 12px;
+  grid-template-columns:repeat(auto-fill, minmax(clamp(84px,12.5vw,124px), 1fr));
   border-top:2px solid rgba(255,255,255,.18);
 }
+.shop-foot{flex:none}
 .shop-card{
   display:flex; flex-direction:column; align-items:center; gap:6px;
   padding:10px 8px; border-radius:16px; cursor:pointer; touch-action:manipulation;
@@ -803,6 +782,23 @@ body.portrait #rotateOverlay{display:flex}
       <rect x="0" y="0" width="4" height="4" fill="#2E3547"/>
       <rect x="5" y="5" width="4" height="4" fill="#2E3547"/>
     </pattern>
+
+    <!-- Patrones por skin: cada color con su propio diseno -->
+    <pattern id="pg-classic" width="10" height="7" patternUnits="userSpaceOnUse"><rect width="10" height="7" fill="#FFFFFF"/><rect y="5.2" width="10" height="1.8" fill="#E3E7F1"/></pattern>
+    <pattern id="pg-emerald" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="16" height="16" fill="#2EE6A8"/><rect width="16" height="6" fill="#1BB37E"/></pattern>
+    <pattern id="pg-ruby" width="13" height="13" patternUnits="userSpaceOnUse"><rect width="13" height="13" fill="#FF3B5C"/><circle cx="3.4" cy="3.4" r="2.3" fill="#C11034"/><circle cx="9.9" cy="9.9" r="2.3" fill="#C11034"/></pattern>
+    <pattern id="pg-sapphire" width="11" height="11" patternUnits="userSpaceOnUse"><rect width="11" height="11" fill="#3B7BFF"/><rect width="11" height="1.6" fill="#1E4FD0"/><rect width="1.6" height="11" fill="#1E4FD0"/></pattern>
+    <pattern id="pg-lav" width="18" height="12" patternUnits="userSpaceOnUse"><rect width="18" height="12" fill="#C9A7FF"/><path d="M0,6 Q4.5,1 9,6 T18,6" fill="none" stroke="#9F72E8" stroke-width="2.1"/></pattern>
+    <pattern id="pg-neon" width="18" height="12" patternUnits="userSpaceOnUse"><rect width="18" height="12" fill="#FF36E0"/><polyline points="0,9 4.5,3 9,9 13.5,3 18,9" fill="none" stroke="#A80F97" stroke-width="2.2"/></pattern>
+    <pattern id="pg-cyan" width="14" height="9" patternUnits="userSpaceOnUse"><rect width="14" height="9" fill="#22E7FF"/><rect x="0" y="1" width="9" height="1.8" fill="#0FB4CC"/><rect x="4" y="5.6" width="10" height="1.8" fill="#0FB4CC"/></pattern>
+    <pattern id="ps-blue" width="12" height="10" patternUnits="userSpaceOnUse"><rect width="12" height="10" fill="#3D7EFF"/><path d="M0,8.4 L6,3.4 L12,8.4" fill="none" stroke="#2B5FC9" stroke-width="2"/></pattern>
+    <pattern id="ps-red" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#FF4D6B"/><rect y="6.5" width="10" height="3.5" fill="#C92B47"/></pattern>
+    <pattern id="ps-green" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#2FBF60"/><circle cx="2.5" cy="2.5" r="1.8" fill="#1D8F44"/><circle cx="7.5" cy="7.5" r="1.8" fill="#1D8F44"/></pattern>
+    <pattern id="ps-black" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#23263B"/><rect width="1.6" height="8" fill="#3A4059"/></pattern>
+    <pattern id="ps-orange" width="12" height="10" patternUnits="userSpaceOnUse"><rect width="12" height="10" fill="#FF8A3D"/><path d="M0,10 L6,2 L12,10 Z" fill="#D75F14"/></pattern>
+    <pattern id="ps-pink" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#FF7AB6"/><circle cx="2.5" cy="2.5" r="1.8" fill="#E04E8F"/><circle cx="7.5" cy="7.5" r="1.8" fill="#E04E8F"/></pattern>
+    <pattern id="ps-purple" width="12" height="8" patternUnits="userSpaceOnUse"><rect width="12" height="8" fill="#8B5CF6"/><polyline points="0,6 3,2 6,6 9,2 12,6" fill="none" stroke="#6236C9" stroke-width="1.8"/></pattern>
+    <pattern id="ps-gold" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#FFC53D"/><path d="M6,1.2 L10.8,6 L6,10.8 L1.2,6 Z" fill="#D69A10"/></pattern>
   </defs>
 </svg>
 
@@ -815,13 +811,13 @@ body.portrait #rotateOverlay{display:flex}
         <circle id="ringFg" cx="36" cy="36" r="30" transform="rotate(-90 36 36)"/>
       </svg>
       <div id="cdNum">5</div>
-      <div id="roundLabel">RONDA 1 · RACHA 0</div>
+      <div id="roundLabel">RONDA 1 · PRIMERO A 2</div>
     </div>
   </div>
 
   <main id="arena">
     <div class="zone zone-player" id="zoneP">
-      <div class="chip chip-player"><span class="pname" id="nameP">TÚ</span><span class="pill" id="rachaBadge">RACHA 0</span></div>
+      <div class="chip chip-player"><span class="pname" id="nameP">TÚ</span><span class="pips" id="pipsP"><i></i><i></i><i></i></span></div>
       <div class="hand-wrap" id="wrapP">
         <div class="aura"></div>
         <div class="shadow-el"></div>
@@ -836,7 +832,7 @@ body.portrait #rotateOverlay{display:flex}
     <div id="centerLine"><span class="vs"><b>VS</b></span></div>
 
     <div class="zone zone-ai" id="zoneA">
-      <div class="chip chip-ai"><span class="pill pill-red" id="threatBadge">NIVEL 1</span><span class="pname" id="nameA">NÉMESIS</span></div>
+      <div class="chip chip-ai"><span class="pips" id="pipsA"><i></i><i></i><i></i></span><span class="pname" id="nameA">CPU</span></div>
       <div class="hand-wrap" id="wrapA">
         <div class="aura"></div>
         <div class="shadow-el"></div>
@@ -849,8 +845,6 @@ body.portrait #rotateOverlay{display:flex}
     </div>
 
     <div id="roundBanner"></div>
-    <div id="threatBar"><span class="tlabel">AMENAZA</span><span class="tsegs" id="threatSegs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
-    <div id="cpuStatus">NÉMESIS</div>
     <div id="chant"><span id="chantWord" class="outl"></span></div>
     <div id="fx"></div>
   </main>
@@ -889,12 +883,12 @@ body.portrait #rotateOverlay{display:flex}
 <div id="matchOverlay">
   <div class="m-inner">
     <div id="mEmblem" class="emblema defeat"><span class="ring"></span><span class="star"></span><span class="cross"></span></div>
-    <div id="mTitle" class="outl">FIN DEL DESAFÍO</div>
-    <div id="mScore">RACHA 0</div>
+    <div id="mTitle" class="outl">¡VICTORIA!</div>
+    <div id="mScore">2 – 1</div>
     <div id="mReward"><i class="coin"></i> +<b id="mRewardNum">0</b></div>
     <div id="mSub">…</div>
     <div class="m-btns">
-      <button id="btnAgain" class="mbtn-big mbtn-again">REINTENTAR</button>
+      <button id="btnAgain" class="mbtn-big mbtn-again">OTRA PARTIDA</button>
       <button id="btnHome" class="mbtn-big mbtn-home">MENÚ</button>
     </div>
   </div>
@@ -911,7 +905,7 @@ body.portrait #rotateOverlay{display:flex}
       </div>
       <div class="pinfo">
         <div id="menuName">JUGADOR</div>
-        <div class="precord" id="pRecord">RACHA MÁXIMA: 0</div>
+        <div class="precord" id="pRecord">V 0 · D 0</div>
       </div>
     </div>
     <div class="coins-chip" id="coinsChip"><i class="coin"></i><span id="coinsMenu">0</span></div>
@@ -925,13 +919,13 @@ body.portrait #rotateOverlay{display:flex}
     <h1 class="logo">
       <span class="w-rock outl">PIEDRA</span><span class="w-xx">·</span><span class="w-paper outl">PAPEL</span><span class="w-xx">·</span><span class="w-sci outl">TIJERAS</span>
     </h1>
-    <p class="tagline">EL DESAFÍO · LA MÁQUINA APRENDE DE CADA MOVIMIENTO</p>
+    <p class="tagline">EL CLÁSICO · AL MEJOR DE 3 · MONEDAS Y SKINS</p>
     <div class="menu-btns">
-      <button id="btnPlay" class="mbtn mbtn-play">JUGAR EL DESAFÍO</button>
+      <button id="btnPlay" class="mbtn mbtn-play">JUGAR</button>
       <button id="btnShop" class="mbtn mbtn-shop">TIENDA</button>
     </div>
   </div>
-  <p class="menu-foot">Cada racha hace a la NÉMESIS más lista y te paga mejor<br>Gana monedas y desbloquea skins en la tienda</p>
+  <p class="menu-foot">Gana monedas en cada partida y desbloquea skins en la tienda</p>
 </div>
 
 <!-- ========== TIENDA ========== -->
@@ -997,8 +991,8 @@ const DETALLE = {
 const NAMES = { rock:'piedra', paper:'papel', scissors:'tijeras' };
 const SAVE_KEY = 'ppt_save_v2';
 
-/* La única rival: NÉMESIS. Su potencia escala con el NIVEL DE AMENAZA. */
-const CPU = { name:'NÉMESIS', glove:'g_lava', sleeve:'s_black', aura:'a_red' };
+/* La CPU rival. */
+const CPU = { name:'CPU', glove:'g_lava', sleeve:'s_black', aura:'a_red' };
 
 /* ================== GUARDADO (localStorage seguro) ================== */
 const DEFAULT_SAVE = () => ({
@@ -1007,7 +1001,7 @@ const DEFAULT_SAVE = () => ({
   name: 'Jugador-' + (100 + Math.floor(Math.random() * 900)),
   owned: { gloves:['g_classic'], sleeves:['s_blue'], auras:['a_blue'] },
   eq: { glove:'g_classic', sleeve:'s_blue', aura:'a_blue' },
-  stats: { best:0, runs:0 },
+  stats: { w:0, l:0 },
   muted: false,
 });
 const store = {
@@ -1017,19 +1011,19 @@ const store = {
 let save = Object.assign(DEFAULT_SAVE(), store.read() || {});
 save.owned = Object.assign({ gloves:['g_classic'], sleeves:['s_blue'], auras:['a_blue'] }, save.owned);
 save.eq    = Object.assign({ glove:'g_classic', sleeve:'s_blue', aura:'a_blue' }, save.eq);
-save.stats = Object.assign({ best:0, runs:0 }, save.stats);
+save.stats = Object.assign({ w:0, l:0 }, save.stats);
 const persist = () => store.write(save);
 
 /* ================== CATÁLOGO DE SKINS ================== */
 const SKINS = {
   gloves: [
-    { id:'g_classic', name:'Clásico',       price:0,   fill:'#FFFFFF' },
-    { id:'g_emerald', name:'Esmeralda',      price:250, fill:'#2EE6A8' },
-    { id:'g_ruby',    name:'Rubí',           price:250, fill:'#FF3B5C' },
-    { id:'g_sapphire',name:'Zafiro',         price:250, fill:'#3B7BFF' },
-    { id:'g_lav',     name:'Lavanda',        price:200, fill:'#C9A7FF' },
-    { id:'g_neon',    name:'Neón Rosa',      price:300, fill:'#FF36E0' },
-    { id:'g_cyan',    name:'Cian Eléctrico', price:300, fill:'#22E7FF' },
+    { id:'g_classic', name:'Clásico',       price:0,   fill:'url(#pg-classic)' },
+    { id:'g_emerald', name:'Esmeralda',      price:250, fill:'url(#pg-emerald)' },
+    { id:'g_ruby',    name:'Rubí',           price:250, fill:'url(#pg-ruby)' },
+    { id:'g_sapphire',name:'Zafiro',         price:250, fill:'url(#pg-sapphire)' },
+    { id:'g_lav',     name:'Lavanda',        price:200, fill:'url(#pg-lav)' },
+    { id:'g_neon',    name:'Neón Rosa',      price:300, fill:'url(#pg-neon)' },
+    { id:'g_cyan',    name:'Cian Eléctrico', price:300, fill:'url(#pg-cyan)' },
     { id:'g_candy',   name:'Caramelo',       price:400, fill:'url(#pCandy)' },
     { id:'g_carbon',  name:'Carbono',        price:400, fill:'url(#pCarbon)' },
     { id:'g_cammo',   name:'Camo',           price:450, fill:'url(#pCammo)' },
@@ -1041,14 +1035,14 @@ const SKINS = {
     { id:'g_rainbow', name:'Arcoíris',       price:900, fill:'url(#pRainbow)' },
   ],
   sleeves: [
-    { id:'s_blue',   name:'Azul',     price:0,   fill:'#3D7EFF' },
-    { id:'s_red',    name:'Carmesí',  price:150, fill:'#FF4D6B' },
-    { id:'s_green',  name:'Jade',     price:150, fill:'#2FBF60' },
-    { id:'s_black',  name:'Negro',    price:200, fill:'#23263B' },
-    { id:'s_orange', name:'Naranja',  price:200, fill:'#FF8A3D' },
-    { id:'s_pink',   name:'Rosa',     price:200, fill:'#FF7AB6' },
-    { id:'s_purple', name:'Púrpura',  price:250, fill:'#8B5CF6' },
-    { id:'s_gold',   name:'Dorada',   price:400, fill:'#FFC53D' },
+    { id:'s_blue',   name:'Azul',     price:0,   fill:'url(#ps-blue)' },
+    { id:'s_red',    name:'Carmesí',  price:150, fill:'url(#ps-red)' },
+    { id:'s_green',  name:'Jade',     price:150, fill:'url(#ps-green)' },
+    { id:'s_black',  name:'Negro',    price:200, fill:'url(#ps-black)' },
+    { id:'s_orange', name:'Naranja',  price:200, fill:'url(#ps-orange)' },
+    { id:'s_pink',   name:'Rosa',     price:200, fill:'url(#ps-pink)' },
+    { id:'s_purple', name:'Púrpura',  price:250, fill:'url(#ps-purple)' },
+    { id:'s_gold',   name:'Dorada',   price:400, fill:'url(#ps-gold)' },
   ],
   auras: [
     { id:'a_blue',   name:'Azul',    price:0,   c:'#56C4FF' },
@@ -1278,14 +1272,14 @@ const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} 
 const M = {
   phase: 'idle',           // idle | count | chant | reveal | banner | ended
   round: 0, remaining: ROUND_SECONDS,
-  racha: 0, threat: 1, runCoins: 0,
+  wins: { me:0, opp:0 },
   myChoice: null, oppChoice: null,
   paused: false,
 };
-/* Cuanto más ganas, más lista se vuelve la NÉMESIS */
-function threatParams(){
-  const t = M.threat;
-  return { iq: Math.min(.95, .5 + t * .045), tier: t >= 7 ? 3 : t >= 4 ? 2 : 1 };
+/* La CPU mejora en SILENCIO con tu experiencia acumulada de la sesión */
+function aiParams(){
+  const m = CpuAI.memory;
+  return { iq: Math.min(.95, .5 + m * .03), tier: m >= 12 ? 3 : m >= 6 ? 2 : 1 };
 }
 const T = { round:null, next:null };
 
@@ -1296,9 +1290,8 @@ const el = {
   zoneP:$('#zoneP'), zoneA:$('#zoneA'),
   cdWrap:$('#cdWrap'), cdNum:$('#cdNum'), ring:$('#ringFg'), roundLabel:$('#roundLabel'),
   bigNum:$('#bigNum'), flash:$('#flash'), chant:$('#chant'), chantWord:$('#chantWord'),
-  fx:$('#fx'), toast:$('#toast'), banner:$('#roundBanner'), cpuStatus:$('#cpuStatus'),
-  rachaBadge:$('#rachaBadge'), threatBadge:$('#threatBadge'), threatSegs:$('#threatSegs'),
-  nameP:$('#nameP'), nameA:$('#nameA'),
+  fx:$('#fx'), toast:$('#toast'), banner:$('#roundBanner'),
+  pipsP:$('#pipsP'), pipsA:$('#pipsA'), nameP:$('#nameP'), nameA:$('#nameA'),
   matchOverlay:$('#matchOverlay'), mEmblem:$('#mEmblem'), mTitle:$('#mTitle'),
   mScore:$('#mScore'), mReward:$('#mReward'), mRewardNum:$('#mRewardNum'), mSub:$('#mSub'),
   btnAgain:$('#btnAgain'), btnHome:$('#btnHome'),
@@ -1381,22 +1374,15 @@ function banner(text, type){
   el.banner.classList.add('show', 'rb-' + type);
 }
 function hideBanner(){ el.banner.classList.remove('show'); }
-function updateBadges(){
-  el.rachaBadge.textContent = 'RACHA ' + M.racha;
-  el.threatBadge.textContent = 'NIVEL ' + M.threat;
-  $$('i', el.threatSegs).forEach((s, i) => s.classList.toggle('on', i < M.threat));
+function updatePips(){
+  $$('i', el.pipsP).forEach((p, i) => p.classList.toggle('on', i < M.wins.me));
+  $$('i', el.pipsA).forEach((p, i) => p.classList.toggle('on', i < M.wins.opp));
 }
 function bumpCoins(){
   el.coinsChip.classList.remove('bump'); reflow(el.coinsChip); el.coinsChip.classList.add('bump');
   el.coinsMenu.textContent = save.coins;
   el.coinsShop.textContent = save.coins;
 }
-function cpuSay(txt){
-  el.cpuStatus.textContent = txt;
-  el.cpuStatus.classList.add('show');
-}
-function cpuQuiet(){ el.cpuStatus.classList.remove('show'); }
-
 /* ================== SKINS: APLICAR ================== */
 function applySkins(){
   const g = skinById('gloves', save.eq.glove);
@@ -1414,7 +1400,7 @@ function applySkins(){
   });
   el.coinsMenu.textContent = save.coins;
   el.coinsShop.textContent = save.coins;
-  el.pRecord.textContent = 'RACHA MÁXIMA: ' + (save.stats.best || 0);
+  el.pRecord.textContent = 'V ' + save.stats.w + ' · D ' + save.stats.l;
 }
 function applyOppSkins(p){
   const g = skinById('gloves', p.glove);
@@ -1431,7 +1417,6 @@ function resetRoundVisuals(){
   [el.zoneP, el.zoneA].forEach(z => z.classList.remove('hot','winner','loser','charge','burst'));
   [el.slideP, el.slideA].forEach(s => s.classList.remove('round-in'));
   setPose('p','rock'); setPose('a','rock');
-  cpuQuiet();
 }
 function unlockButtons(){
   el.footer.classList.remove('locked');
@@ -1451,15 +1436,10 @@ function beginRound(n){
   el.cdWrap.classList.remove('hidden','danger');
   el.cdNum.textContent = String(ROUND_SECONDS);
   el.ring.style.strokeDashoffset = 0;
-  el.roundLabel.textContent = `RONDA ${n} · RACHA ${M.racha}`;
+  el.roundLabel.textContent = `RONDA ${n} · PRIMERO A 2`;
   el.arena.classList.remove('round-in'); reflow(el.arena); el.arena.classList.add('round-in');
   [el.slideP, el.slideA].forEach(s => { s.classList.remove('round-in'); reflow(s); s.classList.add('round-in'); });
   Sfx.tick(); buzz(12);
-  cpuSay(M.round === 1 || CpuAI.memory < 2
-    ? 'NÉMESIS te observa…'
-    : (CpuAI.lastUsed
-        ? CpuAI.flavor(CpuAI.lastUsed.id, CpuAI.lastUsed.move)
-        : 'NÉMESIS memoriza cada movimiento tuyo…'));
   scheduleTick(1000);
 }
 function scheduleTick(ms){
@@ -1541,11 +1521,10 @@ function startChant(){
 function reveal(){
   if (M.phase !== 'chant') return;
   M.phase = 'reveal';
-  cpuQuiet();
   el.chant.classList.remove('on');
   [el.zoneP, el.zoneA].forEach(z => z.classList.remove('charge'));
-  /* la NÉMESIS predice según tu historial y contrarresta */
-  const tp = threatParams();
+  /* la CPU predice según tu historial y contrarresta (en silencio) */
+  const tp = aiParams();
   const aiChoice = CpuAI.pick(tp.iq, tp.tier);
   M.oppChoice = aiChoice;
   setPose('p', M.myChoice);
@@ -1566,39 +1545,29 @@ function impactFx(){
 
 function roundResult(myC, oppC){
   M.phase = 'banner';
-  const tp = threatParams();
-  CpuAI.record(myC, oppC, tp.tier);             // la NÉMESIS aprende de TU jugada
+  const tp = aiParams();
+  CpuAI.record(myC, oppC, tp.tier);             // la CPU aprende de TU jugada
   const winner = myC === oppC ? 'draw' : (BEATS[myC] === oppC ? 'me' : 'opp');
+  if (winner === 'me') M.wins.me++;
+  else if (winner === 'opp') M.wins.opp++;
+  updatePips();
   if (winner === 'me'){ el.zoneP.classList.add('winner'); el.zoneA.classList.add('loser'); }
   else if (winner === 'opp'){ el.zoneA.classList.add('winner'); el.zoneP.classList.add('loser'); }
-  if (winner === 'me'){
-    M.racha++;
-    M.threat = Math.min(10, M.threat + 1);
-    const gain = 15 + (M.threat - 1) * 10;
-    M.runCoins += gain; save.coins += gain; persist();
-    updateBadges();
-    banner(`RONDA ${M.round} SUPERADA · NIVEL ${M.threat} · +${gain}`, 'win');
-    Sfx.rwin(); buzz([20,40,20]);
-    setTimeout(()=>{ Sfx.coin(); bumpCoins(); }, 500);
-  } else if (winner === 'opp'){
-    banner('LA NÉMESIS GANA LA RONDA', 'lose'); Sfx.rlose(); buzz(80);
-    if (CpuAI.lastActive && CpuAI.lastActive.move === myC)
-      cpuSay('¡Predijo tu ' + NAMES[myC].toUpperCase() + '!');
-  } else {
-    banner('EMPATE · SE REPITE LA RONDA', 'draw'); Sfx.rdraw(); buzz(25);
-  }
-  const over = winner === 'opp';
+  if (winner === 'me'){ banner('¡RONDA GANADA!', 'win'); Sfx.rwin(); buzz([20,40,20]); }
+  else if (winner === 'opp'){ banner('RONDA PERDIDA', 'lose'); Sfx.rlose(); buzz(80); }
+  else { banner('EMPATE · SE REPITE', 'draw'); Sfx.rdraw(); buzz(25); }
+  const over = M.wins.me >= 2 || M.wins.opp >= 2;
   T.next = setTimeout(()=>{
-    if (over) endRun();
+    if (over) endMatch(M.wins.me >= 2);
     else beginRound(M.round + 1);
-  }, over ? 2200 : 2900);
+  }, over ? 2000 : 2900);
 }
 
-/* ================== EL DESAFÍO ================== */
+/* ================== PARTIDA ================== */
 function beginRun(){
   Sfx.init(); Sfx.click(); buzz(15);
   M.phase = 'idle';
-  M.racha = 0; M.threat = 1; M.runCoins = 0; M.round = 0;
+  M.wins = { me:0, opp:0 }; M.round = 0;
   M.myChoice = null; M.oppChoice = null;
   M.opp = { name:CPU.name, glove:CPU.glove, sleeve:CPU.sleeve, aura:CPU.aura };
   el.menu.classList.add('hide');
@@ -1607,35 +1576,31 @@ function beginRun(){
   el.nameP.textContent = save.name;
   el.nameA.textContent = CPU.name;
   applyOppSkins(M.opp);
-  updateBadges();
+  updatePips();
   setTimeout(()=>beginRound(1), 550);
 }
-function endRun(){
+function endMatch(won){
   if (M.phase === 'ended') return;
   M.phase = 'ended';
-  cpuQuiet(); hideBanner();
+  hideBanner();
   el.cdWrap.classList.add('hidden');
-  save.stats.runs++;
-  const record = M.racha > (save.stats.best || 0);
-  if (record) save.stats.best = M.racha;
+  if (won) save.stats.w++; else save.stats.l++;
+  const reward = won ? 100 : 0;
+  if (reward) save.coins += reward;
   persist();
-  const ri = CpuAI.readInfo();
-  const readTxt = ri.trials >= 2 ? ` · Te leyó el ${ri.rate}%` : '';
-  el.mEmblem.className = 'emblema ' + (record ? 'victory' : 'defeat');
-  el.mTitle.textContent = record ? '¡NUEVO RÉCORD!' : 'FIN DEL DESAFÍO';
-  el.mTitle.className = 'outl ' + (record ? 'mt-win' : 'mt-lose');
-  el.mScore.textContent = `RACHA ${M.racha} · MEJOR ${save.stats.best}`;
-  el.mSub.textContent = record
-    ? `La NÉMESIS cae ${M.racha} veces seguidas${readTxt}`
-    : `La NÉMESIS te leyó los patrones${readTxt}`;
-  if (M.runCoins > 0){
+  el.mEmblem.className = 'emblema ' + (won ? 'victory' : 'defeat');
+  el.mTitle.textContent = won ? '¡VICTORIA!' : 'DERROTA';
+  el.mTitle.className = 'outl ' + (won ? 'mt-win' : 'mt-lose');
+  el.mScore.textContent = `TÚ ${M.wins.me} – ${M.wins.opp} CPU`;
+  el.mSub.textContent = won ? '¡Buena partida!' : 'La revancha está a un clic';
+  if (reward > 0){
     el.mReward.classList.add('show');
     el.mRewardNum.textContent = '0';
-    animateCount(el.mRewardNum, M.runCoins, 900);
-    setTimeout(()=>{ Sfx.coin(); }, 350);
+    animateCount(el.mRewardNum, reward, 900);
+    setTimeout(()=>{ Sfx.coin(); bumpCoins(); }, 350);
   } else el.mReward.classList.remove('show');
   el.matchOverlay.classList.add('show');
-  if (record){ Sfx.matchWin(); buzz([40,60,40,60]); confetti(); }
+  if (won){ Sfx.matchWin(); buzz([40,60,40,60]); confetti(); }
   else { Sfx.matchLose(); buzz(120); }
   applySkins();
 }
@@ -1657,7 +1622,7 @@ function goMenu(){
   el.cdWrap.classList.add('hidden');
   el.footer.classList.add('locked');
   el.nameP.textContent = save.name; el.nameA.textContent = CPU.name;
-  M.racha = 0; M.threat = 1; updateBadges();
+  M.wins = { me:0, opp:0 }; updatePips();
   el.menu.classList.remove('hide');
   applySkins();
 }
@@ -1731,7 +1696,7 @@ function submitName(){
 function initMenu(){
   applySkins();
   el.menuName.textContent = save.name;
-  el.pRecord.textContent = 'RACHA MÁXIMA: ' + (save.stats.best || 0);
+  el.pRecord.textContent = 'V ' + save.stats.w + ' · D ' + save.stats.l;
   if (!save.named){
     el.nameScreen.classList.remove('hide');
     setTimeout(()=>{ try{ el.nameField.focus(); }catch(e){} }, 250);
@@ -1833,9 +1798,9 @@ checkOrientation();
 window.__ppt = {
   M, save, Sfx, CpuAI, CPU, BEATS, ROUND_SECONDS, SKINS,
   fns: {
-    beginRound, tick, choose, startChant, reveal, roundResult, endRun,
+    beginRound, tick, choose, startChant, reveal, roundResult, endMatch,
     beginRun, goMenu, playAgain, autoPick, applySkins, submitName,
-    renderShop, shopClick, openShop, closeShop, setPose, beginGame, threatParams,
+    renderShop, shopClick, openShop, closeShop, setPose, beginGame, aiParams,
   },
 };
 })();
