@@ -168,9 +168,9 @@ async function refresh(full){
   const ok = [];
   const now = await get(nowKey(0));
   const prev = await get(nowKey(-1));
-  const visits = await get('visits');
-  const matches = await get('matches');
-  const rounds = await get('rounds');
+  const visits = await get('visit');
+  const matches = await get('match');
+  const rounds = await get('round');
   const bad = [now, visits, matches, rounds].some(v => v === null);
   $('#err').classList.toggle('show', bad);
   setKpi('#kNow', now === null ? null : now + prev);
