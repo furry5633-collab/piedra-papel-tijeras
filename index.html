@@ -1770,38 +1770,31 @@ function initMenu(){
 }
 
 /* ================== PANTALLA COMPLETA + ORIENTACIÓN ================== */
-function isIOS(){
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
 function isStandalone(){
   return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 }
+let fsHintShown = false;
 async function tryImmersive(){
-  if (isIOS()){
-    /* Safari de iPhone no permite pantalla completa en webs: guía clara */
-    if (!isStandalone())
-      toast('iPhone: para pantalla completa, toca Compartir (cuadrado con flecha) y elige "Añadir a pantalla de inicio"', 6000);
+  /* App instalada en pantalla de inicio: el manifest ya la bloquea en horizontal */
+  if (isStandalone()) return;
+  /* Navegador sin API de pantalla completa (visor integrado de apps): aviso corto, una vez */
+  if (!document.fullscreenEnabled){
+    if (!fsHintShown){ fsHintShown = true; toast('Para pantalla completa, abre el enlace en Chrome', 3000); }
     return;
   }
-  const fails = [];
   try{
     const root = document.documentElement;
-    if (!document.fullscreenElement){
-      if (root.requestFullscreen) await root.requestFullscreen({ navigationUI:'hide' });
-      else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
-      else throw new Error('fullscreen no disponible');
-    }
-  }catch(e){ fails.push('pantalla completa'); }
-  await new Promise(r => setTimeout(r, 80));
+    if (!document.fullscreenElement && root.requestFullscreen)
+      await root.requestFullscreen({ navigationUI:'hide' });
+  }catch(e){}
+  /* El bloqueo horizontal solo es posible ya en pantalla completa; si no se puede, silencio */
   try{
-    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
-  }catch(e){ fails.push('bloquear la orientación horizontal'); }
-  if (fails.length) toast('Tu navegador no permite ' + fails.join(' ni ') + '. Juega con el móvil en horizontal.', 3800);
+    if (screen.orientation && screen.orientation.lock && document.fullscreenElement)
+      await screen.orientation.lock('landscape');
+  }catch(e){}
 }
-let immersiveTried = false;
 function beginGame(){
-  if (!immersiveTried){ immersiveTried = true; tryImmersive(); }
+  tryImmersive();      /* cada partida lo reintenta (siempre con gesto del usuario) */
   beginRun();
 }
 
