@@ -37,6 +37,9 @@ h1 small{display:block; font-family:var(--fb); font-weight:800; letter-spacing:.
 .kpi{position:relative; overflow:hidden; padding:clamp(10px,2.2vh,18px) 16px; border-radius:18px;
   background:var(--panel); border:1px solid var(--line);
   box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06)}
+.kpi::before{content:""; position:absolute; top:0; left:0; right:0; height:3px;
+  border-radius:18px 18px 0 0; background:linear-gradient(90deg,var(--sky),transparent)}
+.kpi.hot::before{background:linear-gradient(90deg,var(--green),transparent)}
 .kpi .lbl{font-size:clamp(9px,1.8vh,12px); font-weight:900; letter-spacing:.24em; color:#9AA7D8}
 .kpi .num{font-family:var(--fd); font-weight:900; font-size:clamp(26px,7.2vh,54px); line-height:1.05; margin-top:2px}
 .kpi .sub{font-size:clamp(9px,1.7vh,12px); font-weight:700; color:#7C89BD; margin-top:2px}
@@ -49,6 +52,8 @@ h1 small{display:block; font-family:var(--fb); font-weight:800; letter-spacing:.
   background:var(--panel); border:1px solid var(--line);
   box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06)}
 .panel h2{font-family:var(--fd); font-weight:900; font-size:clamp(13px,2.9vh,20px); letter-spacing:.04em; color:#EAF0FF}
+.panel h2::before{content:""; display:inline-block; width:.55em; height:.55em; border-radius:50%;
+  margin-right:.5em; vertical-align:.06em; background:var(--sky); box-shadow:0 0 10px var(--sky)}
 .panel .psub{font-weight:700; font-size:clamp(9px,1.8vh,12px); color:#9AA7D8; letter-spacing:.08em; margin-top:2px}
 .bars{display:flex; align-items:flex-end; gap:clamp(3px,.8vw,8px); height:clamp(96px,22vh,190px); margin-top:clamp(10px,2vh,16px)}
 .bar{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:flex-end; height:100%; position:relative}

@@ -17,8 +17,8 @@
 <meta property="og:title" content="Piedra, Papel o Tijeras">
 <meta property="og:description" content="El clásico juego de toda la vida, rápido y táctil. Partidas al mejor de 3, monedas y skins para personalizar tus manos.">
 <meta property="og:url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/">
-<meta property="og:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
-<meta property="og:image:secure_url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
+<meta property="og:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg?v=3">
+<meta property="og:image:secure_url" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg?v=3">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -27,7 +27,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Piedra, Papel o Tijeras">
 <meta name="twitter:description" content="El clásico juego de toda la vida, rápido y táctil. Partidas al mejor de 3, monedas y skins.">
-<meta name="twitter:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg">
+<meta name="twitter:image" content="https://furry5633-collab.github.io/piedra-papel-tijeras/og-image.jpg?v=3">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 /* ============================================================
@@ -95,6 +95,11 @@ input{font-family:inherit}
   background:radial-gradient(120% 130% at 50% 45%, transparent 58%, rgba(2,4,12,.55));
 }
 #game > *{position:relative; z-index:1}
+.orb{position:absolute; width:46vmin; height:46vmin; border-radius:50%; pointer-events:none;
+  filter:blur(6px); opacity:.55; animation:orbFloat 9s ease-in-out infinite alternate; will-change:transform}
+.orb-l{left:-12vmin; top:6%; background:radial-gradient(circle, rgba(61,126,255,.38), transparent 70%)}
+.orb-r{right:-12vmin; bottom:4%; background:radial-gradient(circle, rgba(255,77,107,.32), transparent 70%); animation-delay:-4.5s}
+@keyframes orbFloat{to{transform:translate(6vmin,4vmin) scale(1.18)}}
 #game.kick{animation:kick .3s ease-out}
 @keyframes kick{30%{transform:scale(1.035)}}
 #game.kick2{animation:kick2 .38s cubic-bezier(.2,1.2,.3,1)}
@@ -149,11 +154,12 @@ input{font-family:inherit}
 #centerLine{
   position:absolute; left:50%; top:6%; bottom:6%; width:5px; margin-left:-2.5px;
   border-radius:99px; z-index:5; pointer-events:none;
-  background:linear-gradient(#8FE3FF,#B7C6FF 32%,#FF9DB0 68%,#FF6B81);
+  background:linear-gradient(180deg,#8FE3FF,#B7C6FF 30%,#FF9DB0 62%,#FF6B81 82%,#8FE3FF);
+  background-size:100% 300%;
   box-shadow:0 0 10px rgba(143,180,255,.95), 0 0 34px rgba(120,140,255,.55);
-  animation:linePulse 2.4s ease-in-out infinite;
+  animation:lineFlow 2.6s linear infinite;
 }
-@keyframes linePulse{50%{opacity:.55}}
+@keyframes lineFlow{to{background-position:0 -300%}}
 #centerLine .vs{
   position:absolute; top:50%; left:50%;
   transform:translate(-50%,-50%) rotate(45deg);
@@ -172,9 +178,11 @@ input{font-family:inherit}
 .chip{
   position:absolute; top:calc(8px + env(safe-area-inset-top,0px)); z-index:14;
   display:flex; align-items:center; gap:7px; padding:5px 12px; border-radius:999px;
-  background:var(--panel); border:2px solid var(--glass-line);
+  background:linear-gradient(180deg,rgba(22,29,62,.78),rgba(11,16,38,.85));
+  border:2px solid var(--glass-line);
   font-weight:800; font-size:clamp(10px,2.1vh,15px); letter-spacing:.08em;
-  backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+  backdrop-filter:blur(6px) saturate(1.35); -webkit-backdrop-filter:blur(6px) saturate(1.35);
+  box-shadow:0 6px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
   max-width:44%;
 }
 .chip .pname{
@@ -219,7 +227,9 @@ input{font-family:inherit}
   position:absolute; inset:-16%; border-radius:50%; opacity:.68;
   transition:opacity .35s, transform .35s;
   background:radial-gradient(circle, var(--zonec) 0%, transparent 62%);
+  animation:auraBreath 3.4s ease-in-out infinite;
 }
+@keyframes auraBreath{50%{opacity:.88}}
 .zone.hot .aura{opacity:1; transform:scale(1.12)}
 .zone.winner .aura{opacity:1; background:radial-gradient(circle, rgba(61,220,132,.45) 0%, transparent 62%)}
 .zone.loser .aura{opacity:.18}
@@ -304,6 +314,9 @@ input{font-family:inherit}
   100%{transform:scale(1.4); opacity:0}
 }
 #bigNum span.strong{color:var(--yellow)}
+#bigNum span.c3{color:var(--amber); text-shadow:0 0 8vh rgba(255,176,32,.55)}
+#bigNum span.c2{color:var(--sky); text-shadow:0 0 8vh rgba(56,208,255,.55)}
+#bigNum span.c1{color:#FF5470; text-shadow:0 0 8vh rgba(255,84,112,.6)}
 #flash{position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:60}
 #flash.go{animation:flashW .5s ease-out forwards}
 @keyframes flashW{0%{opacity:.85}100%{opacity:0}}
@@ -360,6 +373,14 @@ input{font-family:inherit}
 .choice-btn.selected.auto::after{content:'🎲'}
 .choice-btn.dim{opacity:.35; filter:saturate(.4)}
 #choices.locked .choice-btn{pointer-events:none; cursor:default}
+.choice-btn::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:.09;
+  background:repeating-linear-gradient(45deg,#fff 0 9px,transparent 9px 20px);
+}
+.btn-paper::before{background:repeating-linear-gradient(0deg,#fff 0 2px,transparent 2px 15px); opacity:.07}
+.btn-scissors::before{background:radial-gradient(circle,#fff 1.3px,transparent 1.8px) 0 0/13px 13px; opacity:.10}
+.choice-btn.selected{animation:selPulse 1.15s ease-in-out infinite}
+@keyframes selPulse{50%{box-shadow:0 0 0 3px #fff, 0 0 46px var(--c), 0 5px 0 rgba(0,0,0,.35)}}
 
 /* Botón sonido */
 #btnMute{
@@ -391,6 +412,15 @@ input{font-family:inherit}
 }
 #matchOverlay.show .m-inner{transform:translateY(0) scale(1)}
 .emblema{position:relative; width:clamp(60px,14vh,100px); aspect-ratio:1; margin:0 auto}
+.emblema .rays{
+  position:absolute; inset:-70%; border-radius:50%; display:none;
+  background:repeating-conic-gradient(rgba(255,217,61,.13) 0 9deg, transparent 9deg 24deg);
+  -webkit-mask-image:radial-gradient(circle, #000 30%, transparent 68%);
+  mask-image:radial-gradient(circle, #000 30%, transparent 68%);
+  animation:raysSpin 9s linear infinite;
+}
+.emblema.victory .rays{display:block}
+@keyframes raysSpin{to{transform:rotate(360deg)}}
 .emblema .ring{position:absolute; inset:0; border-radius:50%; border:4px solid rgba(255,255,255,.22)}
 .emblema .star{
   position:absolute; inset:13%;
@@ -535,7 +565,8 @@ input{font-family:inherit}
   min-height:0; padding:0 calc(12px + env(safe-area-inset-right,0px)) 0 calc(12px + env(safe-area-inset-left,0px));
 }
 .menu-hands{display:flex; align-items:flex-end; gap:clamp(8px,3vw,30px)}
-.menu-hands svg{width:clamp(44px,12.5vh,86px); aspect-ratio:1; --sw:9; filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+.menu-hands svg{width:clamp(44px,12.5vh,86px); aspect-ratio:1; --sw:9;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.45)) drop-shadow(0 0 16px rgba(86,196,255,.28))}
 .menu-hands svg:nth-child(1){transform:rotate(7deg); animation:bob 2.2s ease-in-out infinite}
 .menu-hands svg:nth-child(2){transform:translateY(-8px) rotate(-3deg); animation:bob 2.2s -.7s ease-in-out infinite}
 .menu-hands svg:nth-child(3){transform:rotate(-7deg); animation:bob 2.2s -1.4s ease-in-out infinite}
@@ -628,6 +659,8 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
   transition:transform .12s, border-color .15s, background .15s;
 }
 .shop-card:active{transform:scale(.96)}
+.shop-card.rare{border-color:rgba(86,196,255,.30); box-shadow:0 0 14px rgba(86,196,255,.10)}
+.shop-card.epic{border-color:rgba(255,217,61,.42); box-shadow:0 0 20px rgba(255,217,61,.16)}
 .shop-card.equipped{border-color:var(--yellow); background:rgba(255,217,61,.08); box-shadow:0 0 18px rgba(255,217,61,.15)}
 .shop-card.owned{border-color:rgba(61,220,132,.45)}
 .sprev{
@@ -827,6 +860,8 @@ body.portrait #rotateOverlay{display:flex}
 
 <!-- ========== JUEGO ========== -->
 <div id="game">
+  <div class="orb orb-l"></div>
+  <div class="orb orb-r"></div>
   <div id="hud">
     <div id="cdWrap">
       <svg viewBox="0 0 72 72" aria-hidden="true">
@@ -905,7 +940,7 @@ body.portrait #rotateOverlay{display:flex}
 <!-- Fin de partida -->
 <div id="matchOverlay">
   <div class="m-inner">
-    <div id="mEmblem" class="emblema defeat"><span class="ring"></span><span class="star"></span><span class="cross"></span></div>
+    <div id="mEmblem" class="emblema defeat"><span class="rays"></span><span class="ring"></span><span class="star"></span><span class="cross"></span></div>
     <div id="mTitle" class="outl">¡VICTORIA!</div>
     <div id="mScore">2 – 1</div>
     <div id="mReward"><i class="coin"></i> +<b id="mRewardNum">0</b></div>
@@ -1352,7 +1387,8 @@ function toast(msg, ms=2800){
 function bigNumber(txt, strong=false){
   el.bigNum.innerHTML = '';
   const s = document.createElement('span');
-  s.className = 'pum outl' + (strong ? ' strong' : '');
+  const cls = strong ? ' strong' : txt === '3' ? ' c3' : txt === '2' ? ' c2' : txt === '1' ? ' c1' : '';
+  s.className = 'pum outl' + cls;
   s.textContent = txt;
   el.bigNum.appendChild(s);
   clearTimeout(bigNumber.t);
@@ -1665,7 +1701,8 @@ function renderShop(){
     const owned = save.owned[cat].includes(sk.id);
     const equipped = eqId === sk.id;
     const card = document.createElement('div');
-    card.className = 'shop-card' + (equipped ? ' equipped' : owned ? ' owned' : '');
+    card.className = 'shop-card' + (equipped ? ' equipped' : owned ? ' owned' : '')
+      + (sk.price >= 600 ? ' epic' : sk.price >= 300 ? ' rare' : '');
     let prev;
     if (cat === 'auras'){
       prev = `<div class="aura-prev" style="background:radial-gradient(circle, ${hexToRgba(sk.c,.85)} 0%, ${hexToRgba(sk.c,.25)} 55%, transparent 72%)"></div>`;
