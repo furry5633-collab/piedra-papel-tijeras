@@ -568,6 +568,7 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
 .mbtn-play:active{box-shadow:0 1px 0 #1D9E58}
 .mbtn-shop{color:#3A2A00; background:linear-gradient(180deg,#FFDF6B,#FFB020); box-shadow:0 6px 0 #B8770A, 0 12px 26px rgba(255,176,32,.35)}
 .mbtn-shop:active{box-shadow:0 1px 0 #B8770A}
+.menu-foot a.stats-link{color:var(--sky); font-weight:800; text-decoration:none; border-bottom:2px dotted rgba(56,208,255,.55); padding-bottom:1px}
 .menu-foot{
   position:relative; z-index:2; text-align:center; color:#7C89BD; font-weight:700;
   font-size:clamp(9px,1.9vh,13px);
@@ -947,7 +948,7 @@ body.portrait #rotateOverlay{display:flex}
       <button id="btnShop" class="mbtn mbtn-shop">TIENDA</button>
     </div>
   </div>
-  <p class="menu-foot">Gana monedas en cada partida y desbloquea skins en la tienda<br><span id="ctrlHint"></span></p>
+  <p class="menu-foot">Gana monedas en cada partida y desbloquea skins en la tienda<br><span id="ctrlHint"></span><br><a class="stats-link" href="stats.html">Estadísticas en vivo</a></p>
 </div>
 
 <!-- ========== TIENDA ========== -->
@@ -1567,6 +1568,7 @@ function impactFx(){
 
 function roundResult(myC, oppC){
   M.phase = 'banner';
+  pingActivity('round');
   const tp = aiParams();
   CpuAI.record(myC, oppC, tp.tier);             // la CPU aprende de TU jugada
   const winner = myC === oppC ? 'draw' : (BEATS[myC] === oppC ? 'me' : 'opp');
@@ -1588,6 +1590,7 @@ function roundResult(myC, oppC){
 /* ================== PARTIDA ================== */
 function beginRun(){
   Sfx.init(); Sfx.click(); buzz(15);
+  pingActivity('match');
   M.phase = 'idle';
   M.wins = { me:0, opp:0 }; M.round = 0;
   M.myChoice = null; M.oppChoice = null;
@@ -1788,6 +1791,22 @@ if (!('ontouchstart' in window) && !navigator.maxTouchPoints){
   $('#rotateText').textContent = 'Este juego solo funciona en horizontal: amplia la ventana o gira el móvil';
 }
 
+/* ================== TELEMETRÍA (contadores agregados, sin datos personales) ================== */
+const TELEMETRY_NS = 'ppt-furry5633';
+const TELEMETRY_URL = 'https://abacus.jasoncameron.dev/hit/' + TELEMETRY_NS + '/';
+function ping(k){
+  try{ fetch(TELEMETRY_URL + k, { mode:'no-cors', keepalive:true }).catch(()=>{}); }catch(e){}
+}
+function pingActivity(kind){          /* kind: visit | match | round */
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const hKey = d.getUTCFullYear() + pad(d.getUTCMonth()+1) + pad(d.getUTCDate()) + pad(d.getUTCHours());
+  ping(kind);
+  ping('h-' + hKey);
+  ping('d-' + hKey.slice(0, 8));
+  ping('now-' + Math.floor(Date.now() / 300000));
+}
+
 /* ================== MANDO (CONSOLA) + NAVEGACIÓN ================== */
 const Pad = {
   timer:null, prev:{}, focusIdx:0, connected:false, nav:false,
@@ -1917,6 +1936,7 @@ initMenu();
 checkOrientation();
 Pad.start();
 updateCtrlHint();
+pingActivity('visit');
 
 /* API interna para pruebas */
 window.__ppt = {
