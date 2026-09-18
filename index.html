@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/png" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Piedra, Papel o Tijeras</title>
 
 <!-- ===== Compartir en redes (WhatsApp/Telegram/Discord/X…) ===== -->
@@ -599,6 +600,8 @@ h1.logo .w-xx{color:#8A96C8; font-size:.5em; vertical-align:middle; padding:0 .3
 .mbtn-play:active{box-shadow:0 1px 0 #1D9E58}
 .mbtn-shop{color:#3A2A00; background:linear-gradient(180deg,#FFDF6B,#FFB020); box-shadow:0 6px 0 #B8770A, 0 12px 26px rgba(255,176,32,.35)}
 .mbtn-shop:active{box-shadow:0 1px 0 #B8770A}
+.mbtn-share{color:#F3EFFF; background:linear-gradient(180deg,#9F72E8,#6236C9); box-shadow:0 6px 0 #4A28A0}
+.mbtn-share:active{box-shadow:0 1px 0 #4A28A0}
 .menu-foot a.stats-link{color:var(--sky); font-weight:800; text-decoration:none; border-bottom:2px dotted rgba(56,208,255,.55); padding-bottom:1px}
 .menu-foot{
   position:relative; z-index:2; text-align:center; color:#7C89BD; font-weight:700;
@@ -981,6 +984,7 @@ body.portrait #rotateOverlay{display:flex}
     <div class="menu-btns">
       <button id="btnPlay" class="mbtn mbtn-play">JUGAR</button>
       <button id="btnShop" class="mbtn mbtn-shop">TIENDA</button>
+      <button id="btnShare" class="mbtn mbtn-share">COMPARTIR</button>
     </div>
   </div>
   <p class="menu-foot">Gana monedas en cada partida y desbloquea skins en la tienda<br><span id="ctrlHint"></span><br><a class="stats-link" href="stats.html">Estadísticas en vivo</a></p>
@@ -1353,7 +1357,7 @@ const el = {
   matchOverlay:$('#matchOverlay'), mEmblem:$('#mEmblem'), mTitle:$('#mTitle'),
   mScore:$('#mScore'), mReward:$('#mReward'), mRewardNum:$('#mRewardNum'), mSub:$('#mSub'),
   btnAgain:$('#btnAgain'), btnHome:$('#btnHome'),
-  menu:$('#menuScreen'), btnPlay:$('#btnPlay'), btnShop:$('#btnShop'),
+  menu:$('#menuScreen'), btnPlay:$('#btnPlay'), btnShop:$('#btnShop'), btnShare:$('#btnShare'),
   menuName:$('#menuName'), pRecord:$('#pRecord'), coinsMenu:$('#coinsMenu'),
   nameScreen:$('#nameScreen'), nameField:$('#nameField'), btnName:$('#btnName'), ctrlHint:$('#ctrlHint'),
   slideP:$('#slideP'), slideA:$('#slideA'),
@@ -1851,7 +1855,7 @@ const Pad = {
     if (!el.nameScreen.classList.contains('hide')) return [el.btnName];
     if (el.shop.classList.contains('show')) return $$('.shop-card', el.shopGrid);
     if (el.matchOverlay.classList.contains('show')) return [el.btnAgain, el.btnHome];
-    if (!el.menu.classList.contains('hide')) return [el.btnPlay, el.btnShop];
+    if (!el.menu.classList.contains('hide')) return [el.btnPlay, el.btnShop, el.btnShare];
     if (M.phase === 'count') return $$('.choice-btn', el.footer);
     return [];
   },
@@ -1934,6 +1938,17 @@ $$('.choice-btn').forEach(b => {
 });
 el.btnPlay.addEventListener(onBtn, e => { e.preventDefault(); beginGame(); });
 el.btnShop.addEventListener(onBtn, e => { e.preventDefault(); openShop(); });
+el.btnShare.addEventListener(onBtn, async e => {
+  e.preventDefault(); Sfx.click();
+  const url = location.href.split('?')[0].split('#')[0];
+  const data = { title: 'Piedra, Papel o Tijeras', text: 'Juega conmigo, al mejor de 3:', url };
+  if (navigator.share){
+    try{ await navigator.share(data); }catch(err){}
+  } else {
+    try{ await navigator.clipboard.writeText(url); toast('Enlace copiado: pégaselo a quien quieras'); }
+    catch(err){ toast(url, 5000); }
+  }
+});
 el.btnShopClose.addEventListener(onBtn, e => { e.preventDefault(); closeShop(); });
 el.btnAgain.addEventListener(onBtn, e => { e.preventDefault(); Sfx.click(); playAgain(); });
 el.btnName.addEventListener(onBtn, e => { e.preventDefault(); submitName(); });
@@ -1974,6 +1989,9 @@ checkOrientation();
 Pad.start();
 updateCtrlHint();
 pingActivity('visit');
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
 
 /* API interna para pruebas */
 window.__ppt = {
