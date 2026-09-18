@@ -1743,7 +1743,7 @@ function shopClick(cat, sk){
     toast('¡Skin desbloqueada: ' + sk.name + '!');
   } else {
     Sfx.sad();
-    toast('Te faltan monedas: gana rondas en el desafío', 2200);
+    toast('Te faltan monedas: gana partidas para conseguir más', 2200);
   }
 }
 function openShop(){ renderShop(); el.shop.classList.add('show'); Sfx.click(); }
@@ -1773,21 +1773,16 @@ function initMenu(){
 function isStandalone(){
   return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 }
-let fsHintShown = false;
 async function tryImmersive(){
-  /* App instalada en pantalla de inicio: el manifest ya la bloquea en horizontal */
-  if (isStandalone()) return;
-  /* Navegador sin API de pantalla completa (visor integrado de apps): aviso corto, una vez */
-  if (!document.fullscreenEnabled){
-    if (!fsHintShown){ fsHintShown = true; toast('Para pantalla completa, abre el enlace en Chrome', 3000); }
-    return;
-  }
+  /* 100% SILENCIOSO: se intenta pantalla completa + horizontal en cada partida,
+     y si el navegador no puede o no deja, NO se muestra NINGÚN mensaje.
+     El juego funciona igual en todos los casos. */
   try{
+    if (isStandalone()) return;          /* app instalada: el manifest ya lo bloquea */
     const root = document.documentElement;
     if (!document.fullscreenElement && root.requestFullscreen)
       await root.requestFullscreen({ navigationUI:'hide' });
   }catch(e){}
-  /* El bloqueo horizontal solo es posible ya en pantalla completa; si no se puede, silencio */
   try{
     if (screen.orientation && screen.orientation.lock && document.fullscreenElement)
       await screen.orientation.lock('landscape');
